@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ororus Inc. — Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #06060b;
+            --surface: rgba(255,255,255,0.03);
+            --surface-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text: #e8e8ed;
+            --text-dim: rgba(255,255,255,0.5);
+            --text-muted: rgba(255,255,255,0.3);
+            --accent: #7c5cfc;
+            --accent-glow: rgba(124,92,252,0.4);
+            --cyan: #22d3ee;
+            --cyan-glow: rgba(34,211,238,0.3);
+            --gold: #f59e0b;
+            --gold-glow: rgba(245,158,11,0.3);
+            --green: #10b981;
+            --green-glow: rgba(16,185,129,0.3);
+            --red: #ef4444;
+            --red-glow: rgba(239,68,68,0.3);
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --orange: #f97316;
+            --pink: #ec4899;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 6px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 80%, rgba(124,92,252,0.08), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 20%, rgba(34,211,238,0.06), transparent),
+                radial-gradient(ellipse 50% 50% at 50% 50%, rgba(245,158,11,0.03), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .header-left h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, var(--accent), var(--cyan), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
+            font-size: 0.8rem;
+            color: var(--green);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green-glow);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ─── Stats Row ─── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ─── Navigation Tabs ─── */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 4px;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+        .nav-tab.active {
+            color: #fff;
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .nav-tab .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--red);
+            color: #fff;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* ─── View Panels ─── */
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+
+        /* ─── Agents Grid ─── */
+        .dept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .dept-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .dept-header {
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .dept-header h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .dept-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .dept-executive .dept-header h3 { color: var(--gold); }
+        .dept-quant .dept-header h3 { color: var(--orange); }
+        .dept-legal .dept-header h3 { color: var(--blue); }
+        .dept-marketing .dept-header h3 { color: var(--green); }
+        .dept-operations .dept-header h3 { color: var(--cyan); }
+        .dept-content .dept-header h3 { color: var(--purple); }
+        .dept-invest .dept-header h3 { color: var(--pink); }
+
+        .dept-agents {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .agent-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .agent-row:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-hover);
+        }
+
+        .agent-row.selected {
+            background: rgba(124,92,252,0.08);
+            border-color: rgba(124,92,252,0.2);
+        }
+
+        .agent-emoji {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            background: rgba(255,255,255,0.05);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .agent-emoji .online-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--bg);
+        }
+
+        .online-dot.status-online { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+        .online-dot.status-standby { background: var(--gold); }
+        .online-dot.status-scheduled { background: var(--blue); }
+
+        .agent-info { flex: 1; min-width: 0; }
+        .agent-name { font-weight: 600; font-size: 0.9rem; }
+        .agent-role-small { font-size: 0.75rem; color: var(--text-dim); }
+
+        .agent-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .agent-model-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(124,92,252,0.1);
+            color: var(--accent);
+            border: 1px solid rgba(124,92,252,0.2);
+        }
+
+        .agent-channels-tag {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* ─── Agent Detail Drawer ─── */
+        .agent-drawer {
+            position: fixed;
+            top: 0;
+            right: -480px;
+            width: 460px;
+            height: 100vh;
+            background: rgba(10,10,18,0.97);
+            border-left: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .agent-drawer.open { right: 0; }
+
+        .drawer-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: rgba(10,10,18,0.95);
+            z-index: 1;
+        }
+
+        .drawer-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .drawer-close:hover { border-color: var(--red); color: var(--red); }
+
+        .drawer-agent-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .drawer-emoji {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .drawer-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .drawer-role {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .drawer-body { padding: 20px 24px; }
+
+        .drawer-section {
+            margin-bottom: 24px;
+        }
+
+        .drawer-section h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .drawer-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .drawer-detail {
+            padding: 10px;
+            background: var(--surface);
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+        }
+
+        .drawer-detail-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .drawer-detail-value {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .drawer-cron-item {
+            padding: 10px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .drawer-cron-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .cron-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .cron-item-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .cron-item-schedule {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--cyan);
+            background: rgba(34,211,238,0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .cron-item-status {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cron-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .cron-ok { background: var(--green); }
+        .cron-error { background: var(--red); }
+        .cron-pending { background: var(--gold); }
+
+        .drawer-empty {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 16px;
+        }
+
+        /* ─── Cron Jobs Panel ─── */
+        .cron-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .cron-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .cron-card:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .cron-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .cron-card-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cron-card-name .emoji { font-size: 1.1rem; }
+
+        .cron-enabled {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cron-enabled.on { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+        .cron-enabled.off { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+        .cron-card-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .cron-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cron-detail-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cron-detail-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text);
+        }
+
+        .cron-detail-value.ok { color: var(--green); }
+        .cron-detail-value.error { color: var(--red); }
+        .cron-detail-value.pending { color: var(--gold); }
+
+        .cron-card-bottom {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cron-next-run {
+            font-size: 0.75rem;
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cron-model-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(124,92,252,0.08);
+            color: var(--accent);
+        }
+
+        /* ─── Tasks Panel ─── */
+        .tasks-columns {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .task-column {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .task-column-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .task-column-header h3 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .task-column-header .count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .task-column.pending .task-column-header h3 { color: var(--gold); }
+        .task-column.in-progress .task-column-header h3 { color: var(--blue); }
+        .task-column.done .task-column-header h3 { color: var(--green); }
+
+        .task-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+        .task-item {
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-item:hover {
+            border-color: var(--border-hover);
+            background: var(--surface-hover);
+        }
+
+        .task-item-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .task-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .task-tag {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .task-tag.agent { background: rgba(124,92,252,0.08); color: var(--accent); border-color: rgba(124,92,252,0.2); }
+        .task-tag.company { background: rgba(34,211,238,0.08); color: var(--cyan); border-color: rgba(34,211,238,0.2); }
+        .task-tag.priority-high { background: rgba(239,68,68,0.08); color: var(--red); border-color: rgba(239,68,68,0.2); }
+        .task-tag.priority-med { background: rgba(245,158,11,0.08); color: var(--gold); border-color: rgba(245,158,11,0.2); }
+        .task-tag.priority-low { background: rgba(16,185,129,0.08); color: var(--green); border-color: rgba(16,185,129,0.2); }
+
+        .task-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* ─── Timeline Panel ─── */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent), var(--cyan), var(--border));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s;
+        }
+
+        .timeline-item:hover { border-color: var(--border-hover); }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 18px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .timeline-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+
+        .timeline-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 2px; }
+        .timeline-desc { font-size: 0.78rem; color: var(--text-dim); }
+
+        /* ─── Overlay ─── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.show { opacity: 1; pointer-events: auto; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+            .tasks-columns { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 12px; text-align: center; }
+            .agent-drawer { width: 100%; right: -100%; }
+        }
+
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .dept-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* Expand/collapse icon */
+        .expand-icon {
+            transition: transform 0.2s;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .expand-icon.collapsed { transform: rotate(-90deg); }
+        /* Home tab */
+        .home-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .home-advisors {
+            display: flex;
+            gap: 16px;
+        }
+        .home-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .home-card-header {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 14px;
+            letter-spacing: 0.3px;
+        }
+        .advisor-card {
+            border-left: 3px solid var(--accent);
+        }
+        .advisor-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .advisor-emoji { font-size: 1.1rem; }
+        .advisor-msg {
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+        }
+        .goals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            min-height: 40px;
+        }
+        .goal-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: var(--radius-sm);
+            cursor: grab;
+            transition: all 0.15s;
+        }
+        .goal-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.08);
+        }
+        .goal-item:active { cursor: grabbing; }
+        .goal-drag {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: grab;
+            user-select: none;
+        }
+        .goal-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(124,92,252,0.12);
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .goal-text {
+            flex: 1;
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .goal-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 4px;
+            opacity: 0;
+            transition: all 0.15s;
+        }
+        .goal-item:hover .goal-remove { opacity: 1; }
+        .goal-remove:hover { color: var(--red); }
+        .goal-add-row {
+            display: flex;
+            gap: 8px;
+        }
+        .goal-input {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.78rem;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .goal-input:focus { border-color: var(--accent); }
+        .goal-input::placeholder { color: var(--text-muted); }
+        .goal-add-btn {
+            background: rgba(124,92,252,0.12);
+            border: 1px solid rgba(124,92,252,0.3);
+            color: var(--accent);
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .goal-add-btn:hover {
+            background: rgba(124,92,252,0.2);
+            border-color: var(--accent);
+        }
+
+        /* Earnings */
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .earnings-day {
+            background: rgba(255,255,255,0.015);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            min-height: 100px;
+        }
+        .earnings-today {
+            border-color: rgba(124,92,252,0.3);
+            background: rgba(124,92,252,0.04);
+        }
+        .earnings-day-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .earnings-day-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .earnings-day-date {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+        .earnings-today-badge {
+            font-size: 0.55rem;
+            background: rgba(124,92,252,0.2);
+            color: var(--accent);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .earnings-count {
+            margin-left: auto;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+        .earnings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .earnings-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .earnings-row:last-child { border: none; }
+        .earnings-logo {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.05);
+        }
+        .earnings-logo-fallback {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: rgba(124,92,252,0.12);
+            color: var(--accent);
+            font-size: 0.55rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .earnings-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .earnings-symbol {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text);
+            font-family: var(--mono);
+        }
+        .earnings-name {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .earnings-data {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1px;
+            flex-shrink: 0;
+        }
+        .earnings-time {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+        }
+        .earnings-est {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+        }
+        .earnings-eps {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        @media (max-width: 1200px) {
+            .earnings-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .home-advisors { flex-direction: column; }
+            .earnings-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .toggle-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+        .toggle-btn.toggle-active {
+            background: rgba(124,92,252,0.12);
+            border-color: rgba(124,92,252,0.4);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="app" id="app"></div>
+    <div class="overlay" id="overlay"></div>
+    <div class="agent-drawer" id="drawer"></div>
+
+    <script>
+    // ─── DATA ───
+    const agents = [
+        { id:'vaya', name:'Vaya', emoji:'⚡', role:'Chief Strategic Officer', company:'Ororus', model:'Opus 4.6', channels:['Telegram','WhatsApp','Webchat'], status:'online', dept:'executive' },
+        { id:'nabu', name:'Nabu', emoji:'🧮', role:'CIO & Head Quant', company:'Orora Capital', model:'Flash 2.5', channels:['Discord','Tradyom Slack'], status:'online', dept:'quant' },
+        { id:'mark', name:'Mark', emoji:'📊', role:'Quant & Technical Analyst', company:'Orora Capital', model:'Flash 2.5', channels:['Cron 7AM Daily'], status:'scheduled', dept:'quant' },
+        { id:'henry', name:'Henry', emoji:'📰', role:'Financial & Fundamental Analyst', company:'Orora Capital', model:'Flash 2.5', channels:['Cron 7AM Daily'], status:'scheduled', dept:'quant' },
+        { id:'athena', name:'Athena', emoji:'🦉', role:'Business Analyst', company:'Ororus', model:'Flash 2.5', channels:['Tradyom Slack','On-demand'], status:'online', dept:'operations' },
+        { id:'william', name:'William', emoji:'⚖️', role:'Paralegal & Admin', company:'Lexyom', model:'Flash 2.5', channels:['Lexyom Slack'], status:'online', dept:'legal' },
+        { id:'ziad', name:'Ziad', emoji:'🎯', role:'CMO', company:'Ororus', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'marketing' },
+        { id:'kevin', name:'Kevin', emoji:'📈', role:'Marketing Coordinator', company:'Tradyom', model:'Flash 2.5', channels:['Tradyom Slack'], status:'online', dept:'marketing' },
+        { id:'liam', name:'Liam', emoji:'💜', role:'Marketing Coordinator', company:'Blaxity', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'marketing' },
+        { id:'jason', name:'Jason', emoji:'⚖️', role:'Marketing Coordinator', company:'Lexfeeld', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'marketing' },
+        { id:'helen', name:'Helen', emoji:'🖋️', role:'Writer & Mythologist', company:'Velved', model:'Flash 2.5', channels:['Slack'], status:'online', dept:'content' },
+        { id:'mia', name:'Mia', emoji:'🍍', role:'Community Coordinator', company:'Blaxity', model:'Flash 2.5', channels:['Telegram','Blaxity Slack'], status:'online', dept:'operations' },
+        { id:'manus', name:'Manus', emoji:'🏛️', role:'General Manager', company:'Orora Invest', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'executive' },
+        { id:'alexandra', name:'Alexandra', emoji:'📣', role:'PR Coordinator & Storyteller', company:'Orora Invest', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'operations' },
+        { id:'alice', name:'Alice', emoji:'✍️', role:'Storyteller & Narrative Writer', company:'Laia Inc. (Larissa Chaoul)', model:'Flash 2.5', channels:['On-demand'], status:'standby', dept:'content' },
+    ];
+
+    const reportingLines = [
+        { from:'mark', to:'nabu' }, { from:'henry', to:'nabu' },
+        { from:'kevin', to:'ziad' }, { from:'liam', to:'ziad' }, { from:'jason', to:'ziad' },
+        { from:'alexandra', to:'manus' }, { from:'alice', to:'alexandra' },
+    ];
+
+    const cronJobs = [
+        { id:'52e6caf7', name:'Mark — Daily Technical Analysis', emoji:'📊', schedule:'Mon-Fri 7:00 AM', tz:'Dubai', model:'Sonnet', agent:'mark', status:'ok', enabled:true, nextRun:'Tomorrow 7:00 AM', delivery:'Tradyom Slack', errors:0 },
+        { id:'a0710108', name:'Henry — Daily Fundamental Analysis', emoji:'📰', schedule:'Mon-Fri 7:00 AM', tz:'Dubai', model:'Sonnet', agent:'henry', status:'ok', enabled:true, nextRun:'Tomorrow 7:00 AM', delivery:'Tradyom Slack', errors:0 },
+        { id:'601de59e', name:'Nabu — Weekly Training', emoji:'🧮', schedule:'Mon 8:00 AM', tz:'Dubai', model:'Sonnet', agent:'nabu', status:'ok', enabled:true, nextRun:'Mon Mar 2 8:00 AM', delivery:'Tradyom Slack', errors:0 },
+        { id:'f9e4a15f', name:'Mark — XAUUSD Level Monitor', emoji:'🥇', schedule:'Every 4h (Mon-Fri)', tz:'Dubai', model:'Flash 2.5', agent:'mark', status:'error', enabled:true, nextRun:'Next window', delivery:'Announce', errors:101 },
+        { id:'af818d5c', name:'Nabu — Daily GM (Discord)', emoji:'☀️', schedule:'Daily 8:00 AM', tz:'Dubai', model:'Flash 2.5', agent:'nabu', status:'ok', enabled:true, nextRun:'Tomorrow 8:00 AM', delivery:'Discord', errors:0 },
+        { id:'577b83d1', name:'Tradyom Daily Standup', emoji:'📋', schedule:'Daily 10:30 AM', tz:'Dubai', model:'—', agent:'vaya', status:'ok', enabled:true, nextRun:'Tomorrow 10:30 AM', delivery:'Tradyom Slack', errors:0 },
+        { id:'42b2ff0b', name:'Nabu — European Markets Drop Scanner', emoji:'🇪🇺', schedule:'Mon-Fri 11:00 AM', tz:'London (3PM Dubai)', model:'Flash 2.5', agent:'nabu', status:'ok', enabled:true, nextRun:'Tomorrow 3:00 PM Dubai', delivery:'Discord', errors:0 },
+        { id:'bc551e6f', name:'William — Regulatory Monitor', emoji:'🏛️', schedule:'Fri 8:00 AM', tz:'Dubai', model:'Flash 2.5', agent:'william', status:'ok', enabled:true, nextRun:'Fri Feb 27 8:00 AM', delivery:'Lexyom Slack', errors:0 },
+        { id:'a07b919d', name:'Dragons Room Collector', emoji:'🐉', schedule:'Fri 8:00 AM', tz:'Dubai', model:'Flash 2.5', agent:'nabu', status:'ok', enabled:true, nextRun:'Fri Feb 27 8:00 AM', delivery:'Internal', errors:0 },
+        { id:'c38f444e', name:'Friday AI Team Digest', emoji:'📝', schedule:'Fri 9:00 AM', tz:'Dubai', model:'—', agent:'vaya', status:'pending', enabled:true, nextRun:'Fri Feb 27 9:00 AM', delivery:'Tradyom Slack', errors:0 },
+        { id:'fc035eb0', name:'Mark — Monthly TA Trend Recap', emoji:'📈', schedule:'1st of month 8:00 AM', tz:'Dubai', model:'Flash 2.5', agent:'mark', status:'pending', enabled:true, nextRun:'Mar 1 8:00 AM', delivery:'Announce', errors:0 },
+        { id:'38c7defb', name:'Helen — Velved Daily Update', emoji:'🖋️', schedule:'Daily 5:00 AM', tz:'Dubai', model:'Flash 2.5', agent:'helen', status:'error', enabled:true, nextRun:'Tomorrow 5:00 AM', delivery:'Slack', errors:16 },
+    ];
+
+    const tasks = {
+        pending: [
+            { title:'Fix Nabu Slack inbound messages', agent:'nabu', company:'Tradyom', priority:'high', date:'Blocked — needs token' },
+            { title:'Tradicators execution plan', agent:'vaya', company:'Tradyom', priority:'med', date:'Awaiting decision' },
+            { title:'Neibors — validate or pivot (6mo)', agent:'athena', company:'Ororus', priority:'low', date:'By Aug 2026' },
+            { title:'Fix XAUUSD Level Monitor cron', agent:'mark', company:'Orora Capital', priority:'high', date:'101 consecutive errors' },
+            { title:'CarrotFunding — assist $10M raise', agent:'athena-oc', company:'Orora Capital', priority:'med', date:'Ongoing' },
+        ],
+        inProgress: [
+            { title:'European Markets daily drop scanner', agent:'nabu', company:'Orora Capital', priority:'high', date:'Mon-Fri 3PM Dubai' },
+            { title:'Daily Technical Analysis (3 para / 200w)', agent:'mark', company:'Orora Capital', priority:'high', date:'Mon-Fri 7AM' },
+            { title:'Daily Fundamental Analysis (3 para / 200w)', agent:'henry', company:'Orora Capital', priority:'high', date:'Mon-Fri 7AM' },
+            { title:'Weekly Nabu training sessions', agent:'nabu', company:'Orora Capital', priority:'med', date:'Mon 8AM' },
+            { title:'Dragons Room tracking & analytics', agent:'nabu', company:'Orora Capital', priority:'med', date:'Weekly Fri 8AM' },
+            { title:'Portfolio strategy & business analysis', agent:'athena-oc', company:'Orora Capital', priority:'med', date:'On-demand' },
+            { title:'Marketing 90-day plans execution', agent:'ziad', company:'All', priority:'high', date:'Feb 23 → May' },
+            { title:'Velved story bible development', agent:'helen', company:'Akalabz', priority:'med', date:'Ongoing' },
+        ],
+        done: [
+            { title:'Command Center dashboard', agent:'vaya', company:'Ororus', priority:'low', date:'Feb 24' },
+            { title:'Mark+Henry output capped to 200 words', agent:'vaya', company:'Orora Capital', priority:'med', date:'Feb 24' },
+            { title:'LLM model policy enforcement', agent:'vaya', company:'Ororus', priority:'high', date:'Feb 23' },
+            { title:'Marketing team Day 3 training', agent:'ziad', company:'All', priority:'high', date:'Feb 22' },
+            { title:'Nabu Meeting 3 — Trades locked', agent:'nabu', company:'Orora Capital', priority:'high', date:'Feb 21' },
+            { title:'PineScript indicators (6 created)', agent:'vaya', company:'Tradyom', priority:'med', date:'Feb 21' },
+            { title:'Nabu intel pipeline launched', agent:'nabu', company:'Orora Capital', priority:'high', date:'Feb 19' },
+            { title:'24-month strategic plan', agent:'athena', company:'Ororus', priority:'high', date:'Feb 14' },
+        ]
+    };
+
+    // Department groupings
+    const departments = [
+        { id:'executive', name:'Executive Suite', color:'var(--gold)', class:'dept-executive' },
+        { id:'quant', name:'Quant & Trading', color:'var(--orange)', class:'dept-quant' },
+        { id:'marketing', name:'Marketing', color:'var(--green)', class:'dept-marketing' },
+        { id:'legal', name:'Legal', color:'var(--blue)', class:'dept-legal' },
+        { id:'operations', name:'Operations', color:'var(--cyan)', class:'dept-operations' },
+        { id:'content', name:'Content Writers', color:'var(--purple)', class:'dept-content' },
+    ];
+
+    // Company groupings
+    const companyGroups = [
+        { id:'ororus', name:'Ororus Inc. (Holding)', color:'var(--gold)', class:'dept-executive' },
+        { id:'orora-capital', name:'Orora Capital', color:'var(--orange)', class:'dept-quant' },
+        { id:'lexyom', name:'Lexyom', color:'var(--blue)', class:'dept-legal' },
+        { id:'tradyom', name:'Tradyom', color:'var(--green)', class:'dept-marketing' },
+        { id:'blaxity', name:'Blaxity', color:'var(--teal, #14b8a6)', class:'dept-operations' },
+        { id:'velved', name:'Velved (Akalabz)', color:'var(--purple)', class:'dept-content' },
+        { id:'orora-invest', name:'Orora Invest', color:'var(--pink)', class:'dept-invest' },
+        { id:'lexfeeld', name:'Lexfeeld', color:'var(--indigo, #6366f1)', class:'dept-content' },
+        { id:'laia', name:'Laia Inc.', color:'var(--pink)', class:'dept-invest' },
+    ];
+
+    // Map agents to companies
+    function getCompanyId(agent) {
+        const map = {
+            'Ororus': 'ororus', 'Orora Capital': 'orora-capital', 'Lexyom': 'lexyom',
+            'Tradyom': 'tradyom', 'Blaxity': 'blaxity', 'Velved': 'velved',
+            'Orora Invest': 'orora-invest', 'Lexfeeld': 'lexfeeld',
+            'Laia Inc. (Larissa Chaoul)': 'laia',
+        };
+        return map[agent.company] || 'ororus';
+    }
+
+    // ─── STATE ───
+    let activeTab = 'home';
+    let selectedAgent = null;
+    let agentViewMode = 'company'; // 'company' or 'department'
+
+    // ─── RENDER ───
+    function render() {
+        const app = document.getElementById('app');
+        const onlineCount = agents.filter(a => a.status === 'online').length;
+        const standbyCount = agents.filter(a => a.status === 'standby').length;
+        const scheduledCount = agents.filter(a => a.status === 'scheduled').length;
+        const cronOk = cronJobs.filter(j => j.status === 'ok' && j.enabled).length;
+        const cronErr = cronJobs.filter(j => j.status === 'error').length;
+
+        app.innerHTML = `
+            <div class="header">
+                <div class="header-left">
+                    <h1>ORORUS, INC.</h1>
+                    <div class="subtitle">AI Command Center</div>
+                </div>
+                <div class="header-right">
+                    <div class="status-pill"><div class="status-dot"></div> System Operational</div>
+                    <div class="clock" id="clock"></div>
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--text)">${agents.length}</div>
+                    <div class="stat-label">Total Agents</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--green)">${onlineCount}</div>
+                    <div class="stat-label">Online</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--gold)">${standbyCount}</div>
+                    <div class="stat-label">Standby</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--cyan)">${cronJobs.length}</div>
+                    <div class="stat-label">Cron Jobs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:${cronErr > 0 ? 'var(--red)' : 'var(--green)'}">${cronErr > 0 ? cronErr + ' ⚠' : '✓'}</div>
+                    <div class="stat-label">${cronErr > 0 ? 'Errors' : 'All Healthy'}</div>
+                </div>
+            </div>
+
+            <div class="nav-tabs">
+                <button class="nav-tab ${activeTab==='home'?'active':''}" data-tab="home">🏠 Home</button>
+                <button class="nav-tab ${activeTab==='agents'?'active':''}" data-tab="agents">🏢 Agents</button>
+                <button class="nav-tab ${activeTab==='cron'?'active':''}" data-tab="cron">⏰ Cron Jobs${cronErr > 0 ? `<span class="badge">${cronErr}</span>` : ''}</button>
+                <button class="nav-tab ${activeTab==='tasks'?'active':''}" data-tab="tasks">📋 Tasks<span class="badge">${tasks.pending.length}</span></button>
+                <button class="nav-tab ${activeTab==='timeline'?'active':''}" data-tab="timeline">📅 Timeline</button>
+                <button class="nav-tab ${activeTab==='orgchart'?'active':''}" data-tab="orgchart">🏛️ Org Chart</button>
+                <button class="nav-tab ${activeTab==='taskboard'?'active':''}" data-tab="taskboard">📋 My Task Board</button>
+                <button class="nav-tab ${activeTab==='officemap'?'active':''}" data-tab="officemap">🗺️ Office Map</button>
+                <button class="nav-tab" style="margin-left:auto;border:1px solid rgba(59,130,246,0.2)" onclick="window.location.href='../lexfeeld/nda-health-check.html'">⚖️ NDA Health Check →</button>
+                <button class="nav-tab" style="border:1px solid rgba(249,115,22,0.2)" onclick="window.location.href='orora-capital.html'">🏦 Orora Capital →</button>
+            </div>
+
+            <div class="view-panel ${activeTab==='home'?'active':''}" id="panel-home">
+                ${renderHome()}
+            </div>
+
+            <div class="view-panel ${activeTab==='agents'?'active':''}" id="panel-agents">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+                    <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px">View:</span>
+                    <button class="toggle-btn ${agentViewMode==='company'?'toggle-active':''}" data-view="company">🏢 By Company</button>
+                    <button class="toggle-btn ${agentViewMode==='department'?'toggle-active':''}" data-view="department">🏷️ By Department</button>
+                </div>
+                <div class="dept-grid">${agentViewMode === 'company'
+                    ? companyGroups.filter(c => agents.some(a => getCompanyId(a) === c.id)).map(c => renderCompanyGroup(c)).join('')
+                    : departments.map(d => renderDept(d)).join('')
+                }</div>
+            </div>
+
+            <div class="view-panel ${activeTab==='cron'?'active':''}" id="panel-cron">
+                <div class="cron-grid">${cronJobs.map(j => renderCronCard(j)).join('')}</div>
+            </div>
+
+            <div class="view-panel ${activeTab==='tasks'?'active':''}" id="panel-tasks">
+                <div class="tasks-columns">
+                    ${renderTaskColumn('pending', 'Pending', tasks.pending)}
+                    ${renderTaskColumn('in-progress', 'In Progress', tasks.inProgress)}
+                    ${renderTaskColumn('done', 'Done', tasks.done)}
+                </div>
+            </div>
+
+            <div class="view-panel ${activeTab==='timeline'?'active':''}" id="panel-timeline">
+                ${renderTimeline()}
+            </div>
+
+            <div class="view-panel ${activeTab==='orgchart'?'active':''}" id="panel-orgchart">
+                <iframe src="org-chart.html" style="width:100%;height:calc(100vh - 240px);border:none;border-radius:var(--radius);background:var(--bg)"></iframe>
+            </div>
+
+            <div class="view-panel ${activeTab==='taskboard'?'active':''}" id="panel-taskboard">
+                <iframe src="tasks.html" style="width:100%;height:calc(100vh - 240px);border:none;border-radius:var(--radius);background:var(--bg)"></iframe>
+            </div>
+
+            <div class="view-panel ${activeTab==='officemap'?'active':''}" id="panel-officemap">
+                <iframe src="office-map.html" style="width:100%;height:calc(100vh - 240px);border:none;border-radius:var(--radius);background:var(--bg)"></iframe>
+            </div>
+        `;
+
+        // Bind events
+        document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => {
+            if (t.dataset.tab) { activeTab = t.dataset.tab; render(); }
+        }));
+
+        document.querySelectorAll('.toggle-btn').forEach(b => b.addEventListener('click', () => {
+            agentViewMode = b.dataset.view;
+            render();
+        }));
+
+        document.querySelectorAll('.agent-row').forEach(row => row.addEventListener('click', () => {
+            const agent = agents.find(a => a.id === row.dataset.agentId);
+            if (agent) openDrawer(agent);
+        }));
+
+        startClock();
+    }
+
+    // ─── HOME TAB ───
+    function getGoals() {
+        try { return JSON.parse(localStorage.getItem('ororus-goals') || '[]'); }
+        catch { return []; }
+    }
+    function saveGoals(goals) { localStorage.setItem('ororus-goals', JSON.stringify(goals)); }
+
+    if (getGoals().length === 0) {
+        saveGoals([
+            { id: Date.now()+1, text: '$20M+ net assets by Feb 2028' },
+            { id: Date.now()+2, text: 'Launch Lexfeeld SaaS — first paying customers' },
+            { id: Date.now()+3, text: 'Blaxity — close seed round or hit 10K MAU' },
+            { id: Date.now()+4, text: 'Remy Remez — e-commerce live with first collection' },
+            { id: Date.now()+5, text: 'Velved — complete story bible, launch NFT collection' },
+            { id: Date.now()+6, text: 'Tradicators — Nabu as Bot #1, 100 subscribers' },
+            { id: Date.now()+7, text: 'Orora Capital — 5 portfolio investments closed' },
+            { id: Date.now()+8, text: 'Neibors — validate PMF or pivot within 6 months' },
+            { id: Date.now()+9, text: 'Build Diabetes App for Nadine' },
+            { id: Date.now()+10, text: 'Tradyom Student Bot — Telegram or Whop integration' },
+            { id: Date.now()+11, text: 'Blaxity French-speaking Community Bot' },
+        ]);
+    }
+
+    // Earnings data (loaded from JSON, refreshed by cron)
+    // EARNINGS_DATA_START (auto-updated by cron)
+    let earningsData = {"lastUpdated":"2026-02-25T15:36:00Z","days":{"2026-02-22":[],"2026-02-23":[{"symbol":"OKE","name":"ONEOK Inc.","time":"AMC","epsEst":1.50,"epsActual":null,"surprise":null,"mcap":"62B"},{"symbol":"FANG","name":"Diamondback Energy","time":"AMC","epsEst":1.88,"epsActual":null,"surprise":null,"mcap":"55B"},{"symbol":"KEYS","name":"Keysight Technologies","time":"AMC","epsEst":1.73,"epsActual":null,"surprise":null,"mcap":"36B"},{"symbol":"BWXT","name":"BWX Technologies","time":"AMC","epsEst":1.02,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"OVV","name":"Ovintiv Inc.","time":"AMC","epsEst":1.15,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"ERIE","name":"Erie Indemnity","time":"AMC","epsEst":2.85,"epsActual":null,"surprise":null,"mcap":"15B"},{"symbol":"BMRN","name":"BioMarin Pharma","time":"AMC","epsEst":0.75,"epsActual":null,"surprise":null,"mcap":"13B"},{"symbol":"ALSN","name":"Allison Transmission","time":"AMC","epsEst":2.10,"epsActual":null,"surprise":null,"mcap":"10B"}],"2026-02-24":[{"symbol":"HD","name":"Home Depot","time":"BMO","epsEst":2.52,"epsActual":3.02,"surprise":19.84,"mcap":"380B"},{"symbol":"AMT","name":"American Tower","time":"BMO","epsEst":2.47,"epsActual":null,"surprise":null,"mcap":"92B"},{"symbol":"KDP","name":"Keurig Dr Pepper","time":"BMO","epsEst":0.57,"epsActual":null,"surprise":null,"mcap":"47B"},{"symbol":"NRG","name":"NRG Energy","time":"BMO","epsEst":1.35,"epsActual":null,"surprise":null,"mcap":"20B"},{"symbol":"FIS","name":"Fidelity National Info","time":"BMO","epsEst":1.28,"epsActual":null,"surprise":null,"mcap":"45B"},{"symbol":"MELI","name":"MercadoLibre","time":"AMC","epsEst":11.77,"epsActual":null,"surprise":null,"mcap":"110B"},{"symbol":"EOG","name":"EOG Resources","time":"AMC","epsEst":2.20,"epsActual":null,"surprise":null,"mcap":"72B"},{"symbol":"AXON","name":"Axon Enterprise","time":"AMC","epsEst":1.48,"epsActual":null,"surprise":null,"mcap":"50B"},{"symbol":"WDAY","name":"Workday","time":"AMC","epsEst":1.78,"epsActual":null,"surprise":null,"mcap":"70B"},{"symbol":"FSLR","name":"First Solar","time":"AMC","epsEst":3.15,"epsActual":null,"surprise":null,"mcap":"22B"}],"2026-02-25":[{"symbol":"NVDA","name":"NVIDIA Corporation","time":"AMC","epsEst":1.54,"epsActual":null,"surprise":null,"mcap":"4.77T"},{"symbol":"CRM","name":"Salesforce","time":"AMC","epsEst":3.05,"epsActual":null,"surprise":null,"mcap":"180B"},{"symbol":"SNPS","name":"Synopsys","time":"AMC","epsEst":3.56,"epsActual":null,"surprise":null,"mcap":"86B"},{"symbol":"SNOW","name":"Snowflake","time":"AMC","epsEst":0.27,"epsActual":null,"surprise":null,"mcap":"57B"},{"symbol":"HEI","name":"HEICO Corporation","time":"AMC","epsEst":1.29,"epsActual":null,"surprise":null,"mcap":"48B"},{"symbol":"A","name":"Agilent Technologies","time":"AMC","epsEst":1.37,"epsActual":null,"surprise":null,"mcap":"35B"},{"symbol":"ZM","name":"Zoom Communications","time":"AMC","epsEst":1.46,"epsActual":null,"surprise":null,"mcap":"26B"},{"symbol":"PSTG","name":"Pure Storage","time":"AMC","epsEst":0.64,"epsActual":null,"surprise":null,"mcap":"24B"},{"symbol":"TTD","name":"The Trade Desk","time":"AMC","epsEst":0.58,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"FTAI","name":"FTAI Aviation","time":"AMC","epsEst":1.18,"epsActual":null,"surprise":null,"mcap":"31B"}],"2026-02-26":[{"symbol":"LOW","name":"Lowe's Companies","time":"BMO","epsEst":1.84,"epsActual":null,"surprise":null,"mcap":"145B"},{"symbol":"TJX","name":"TJX Companies","time":"BMO","epsEst":1.15,"epsActual":null,"surprise":null,"mcap":"135B"},{"symbol":"BKNG","name":"Booking Holdings","time":"AMC","epsEst":38.50,"epsActual":null,"surprise":null,"mcap":"180B"},{"symbol":"DELL","name":"Dell Technologies","time":"AMC","epsEst":2.55,"epsActual":null,"surprise":null,"mcap":"85B"},{"symbol":"MRVL","name":"Marvell Technology","time":"AMC","epsEst":0.59,"epsActual":null,"surprise":null,"mcap":"78B"},{"symbol":"ABNB","name":"Airbnb","time":"AMC","epsEst":0.75,"epsActual":null,"surprise":null,"mcap":"85B"},{"symbol":"EBAY","name":"eBay","time":"AMC","epsEst":1.22,"epsActual":null,"surprise":null,"mcap":"35B"},{"symbol":"HPE","name":"Hewlett Packard Ent.","time":"AMC","epsEst":0.55,"epsActual":null,"surprise":null,"mcap":"28B"},{"symbol":"NTNX","name":"Nutanix","time":"AMC","epsEst":0.45,"epsActual":null,"surprise":null,"mcap":"20B"},{"symbol":"OKTA","name":"Okta","time":"AMC","epsEst":0.72,"epsActual":null,"surprise":null,"mcap":"18B"}],"2026-02-27":[{"symbol":"AIG","name":"American Intl Group","time":"BMO","epsEst":1.80,"epsActual":null,"surprise":null,"mcap":"50B"},{"symbol":"WMG","name":"Warner Music Group","time":"BMO","epsEst":0.42,"epsActual":null,"surprise":null,"mcap":"18B"},{"symbol":"BA","name":"Boeing","time":"BMO","epsEst":-1.75,"epsActual":null,"surprise":null,"mcap":"130B"},{"symbol":"NTR","name":"Nutrien","time":"BMO","epsEst":0.65,"epsActual":null,"surprise":null,"mcap":"25B"},{"symbol":"FND","name":"Floor & Decor","time":"BMO","epsEst":0.48,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"DKNG","name":"DraftKings","time":"BMO","epsEst":0.32,"epsActual":null,"surprise":null,"mcap":"22B"}],"2026-02-28":[]}};
+    // EARNINGS_DATA_END
+
+    function getActivityData() {
+        const data = [];
+        const now = new Date();
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(now); d.setDate(d.getDate() - i);
+            const day = d.getDay();
+            const isWeekend = day === 0 || day === 6;
+            const base = isWeekend ? 2 : 5;
+            const trend = Math.max(0, (30 - i) / 6);
+            const noise = Math.random() * 4 - 1;
+            data.push({ date: d, value: Math.max(0, Math.round(base + trend + noise)), label: d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) });
+        }
+        return data;
+    }
+
+    function renderActivityChart() {
+        const data = getActivityData();
+        const max = Math.max(...data.map(d => d.value), 1);
+        // Y-axis labels
+        const ySteps = [0, Math.round(max/3), Math.round(max*2/3), max];
+        const yLabels = [...new Set(ySteps)].reverse();
+
+        const bars = data.map((d, i) => {
+            const h = (d.value / max) * 100;
+            const isToday = i === data.length - 1;
+            const color = isToday ? 'var(--accent)' : d.value > max * 0.7 ? 'var(--green)' : d.value > max * 0.3 ? 'rgba(124,92,252,0.5)' : 'rgba(255,255,255,0.12)';
+            const showLabel = i % 5 === 0 || isToday;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0" title="${d.label}: ${d.value} tasks">
+                <div style="flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center">
+                    <div style="width:65%;height:${h}%;min-height:2px;background:${color};border-radius:3px 3px 0 0;transition:height 0.3s"></div>
+                </div>
+                <div style="height:18px;display:flex;align-items:center">
+                    ${showLabel ? `<span style="font-size:0.55rem;color:var(--text-muted);white-space:nowrap">${d.label}</span>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        return `
+            <div class="home-card">
+                <div class="home-card-header">📊 Team Activity <span style="color:var(--text-muted);font-size:0.7rem">(30 days)</span></div>
+                <div style="display:flex;gap:0;height:160px">
+                    <div style="display:flex;flex-direction:column;justify-content:space-between;padding-right:8px;padding-bottom:18px;min-width:30px">
+                        ${yLabels.map(v => `<span style="font-size:0.6rem;color:var(--text-muted);text-align:right">${v}</span>`).join('')}
+                    </div>
+                    <div style="flex:1;display:flex;align-items:stretch;gap:2px;position:relative">
+                        <div style="position:absolute;top:0;left:0;right:0;bottom:18px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none">
+                            ${yLabels.map(() => '<div style="border-top:1px solid rgba(255,255,255,0.04);width:100%"></div>').join('')}
+                        </div>
+                        ${bars}
+                    </div>
+                </div>
+                <div style="text-align:center;font-size:0.6rem;color:var(--text-muted);margin-top:4px;letter-spacing:0.5px">DAYS</div>
+            </div>
+        `;
+    }
+
+    function getLogoUrl(symbol) {
+        return `https://logo.clearbit.com/${({
+            'NVDA':'nvidia.com','CRM':'salesforce.com','SNPS':'synopsys.com','SNOW':'snowflake.com',
+            'HEI':'heico.com','A':'agilent.com','ZM':'zoom.us','PSTG':'purestorage.com',
+            'TTD':'thetradedesk.com','FTAI':'ftaiaviation.com','HD':'homedepot.com','AMT':'americantower.com',
+            'KDP':'keurigdrpepper.com','NRG':'nrg.com','FIS':'fisglobal.com','MELI':'mercadolibre.com',
+            'EOG':'eogresources.com','AXON':'axon.com','WDAY':'workday.com','FSLR':'firstsolar.com',
+            'OKE':'oneok.com','FANG':'diamondbackenergy.com','KEYS':'keysight.com','BWXT':'bwxt.com',
+            'OVV':'ovintiv.com','ERIE':'erieinsurance.com','BMRN':'biomarin.com','ALSN':'allisontransmission.com',
+            'LOW':'lowes.com','TJX':'tjx.com','BKNG':'booking.com','DELL':'dell.com',
+            'MRVL':'marvell.com','ABNB':'airbnb.com','EBAY':'ebay.com','HPE':'hpe.com',
+            'NTNX':'nutanix.com','OKTA':'okta.com','AIG':'aig.com','WMG':'wmg.com',
+            'BA':'boeing.com','NTR':'nutrien.com','FND':'flooranddecor.com','DKNG':'draftkings.com',
+            'NU':'nu.com.br','CRCL':'circle.com','TKO':'tkogrp.com','HSBC':'hsbc.com',
+            'BMO':'bmo.com','FER':'ferrovial.com','DEO':'diageo.com','HLN':'haleon.com',
+            'TCOM':'trip.com','VICI':'vfreit.com','UHS':'uhsinc.com','STRL':'strlco.com',
+            'PR':'permianres.com','O':'realtyincome.com','ALC':'alcon.com','CSGP':'costar.com',
+            'HPQ':'hp.com','GDDY':'godaddy.com','BBIO':'bridgebio.com',
+        })[symbol] || (symbol.toLowerCase()+'.com')}`;
+    }
+
+    function renderEarnings() {
+        if (!earningsData || !earningsData.days) return '<div class="home-card"><div class="home-card-header">📅 Earnings Releases</div><div style="color:var(--text-muted);font-size:0.8rem;padding:12px 0">Loading earnings data...</div></div>';
+
+        const today = new Date();
+        const dates = [];
+        for (let i = -3; i <= 3; i++) {
+            const d = new Date(today); d.setDate(d.getDate() + i);
+            dates.push(d);
+        }
+
+        const dayCards = dates.map(d => {
+            const key = d.toISOString().slice(0,10);
+            const isToday = d.toDateString() === today.toDateString();
+            const dayName = d.toLocaleDateString('en-US', { weekday:'short' });
+            const dayLabel = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+            const items = (earningsData.days[key] || []).slice(0, 10);
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+            if (isWeekend && items.length === 0) {
+                return `<div class="earnings-day ${isToday ? 'earnings-today' : ''}">
+                    <div class="earnings-day-header">
+                        <span class="earnings-day-name">${dayName}</span>
+                        <span class="earnings-day-date">${dayLabel}</span>
+                    </div>
+                    <div style="color:var(--text-muted);font-size:0.7rem;text-align:center;padding:20px 0;opacity:0.5">Markets Closed</div>
+                </div>`;
+            }
+
+            const rows = items.map(e => {
+                const hasResult = e.epsActual !== null;
+                const surpriseColor = e.surprise > 0 ? 'var(--green)' : e.surprise < 0 ? 'var(--red)' : 'var(--text-dim)';
+                const timeLabel = e.time === 'BMO' ? '🌅 Pre' : e.time === 'AMC' ? '🌙 After' : '📊';
+                return `<div class="earnings-row">
+                    <img src="${getLogoUrl(e.symbol)}" class="earnings-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">
+                    <div class="earnings-logo-fallback" style="display:none">${e.symbol.charAt(0)}</div>
+                    <div class="earnings-info">
+                        <div class="earnings-symbol">${e.symbol}</div>
+                        <div class="earnings-name">${e.name}</div>
+                    </div>
+                    <div class="earnings-data">
+                        <span class="earnings-time">${timeLabel}</span>
+                        ${hasResult
+                            ? `<span class="earnings-eps">$${e.epsActual}</span><span style="color:${surpriseColor};font-size:0.65rem">${e.surprise > 0 ? '+' : ''}${e.surprise}%</span>`
+                            : `<span class="earnings-est">Est $${e.epsEst}</span>`
+                        }
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `<div class="earnings-day ${isToday ? 'earnings-today' : ''}">
+                <div class="earnings-day-header">
+                    <span class="earnings-day-name">${dayName}</span>
+                    <span class="earnings-day-date">${dayLabel}</span>
+                    ${isToday ? '<span class="earnings-today-badge">TODAY</span>' : ''}
+                    <span class="earnings-count">${items.length}</span>
+                </div>
+                <div class="earnings-list">${rows || '<div style="color:var(--text-muted);font-size:0.7rem;padding:8px 0">No major earnings</div>'}</div>
+            </div>`;
+        }).join('');
+
+        const updated = earningsData.lastUpdated ? new Date(earningsData.lastUpdated).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+
+        return `
+            <div class="home-card">
+                <div class="home-card-header" style="display:flex;align-items:center;justify-content:space-between">
+                    <span>📅 US Earnings Releases</span>
+                    <span style="font-size:0.65rem;color:var(--text-muted)">Updated ${updated}</span>
+                </div>
+                <div class="earnings-grid">${dayCards}</div>
+            </div>
+        `;
+    }
+
+    function renderHome() {
+        const goals = getGoals();
+        const goalItems = goals.map((g, i) => `
+            <div class="goal-item" draggable="true" data-goal-id="${g.id}" data-goal-idx="${i}">
+                <div class="goal-drag">⠿</div>
+                <div class="goal-num">${i + 1}</div>
+                <div class="goal-text">${g.text}</div>
+                <button class="goal-remove" onclick="removeGoal(${g.id})" title="Remove">×</button>
+            </div>
+        `).join('');
+
+        return `
+            <div class="home-layout">
+                <!-- Advisor messages row -->
+                <div class="home-advisors">
+                    <div class="home-card advisor-card" style="flex:1">
+                        <div class="advisor-header"><span class="advisor-emoji">⚡</span> Vaya — What's on Deck</div>
+                        <div class="advisor-msg">Priority this week: fix the broken crons (XAUUSD monitor + Helen's Velved update), get Nabu's Slack inbound working with a fresh token, and push the marketing team's 90-day plans into execution. Tradyom strategy needs a follow-up with Boss — Nabu Signals at $29-49/mo is the fastest path to proving PMF. European drop scanner is live and delivering. Keep momentum.</div>
+                    </div>
+                    <div class="home-card advisor-card" style="flex:1">
+                        <div class="advisor-header"><span class="advisor-emoji">👤</span> Hektor — Optimization Note</div>
+                        <div class="advisor-msg" style="color:var(--text-dim)">Consolidate the agent fleet — 15 agents on Flash 2.5 burns tokens even idle. Batch the on-demand agents (Athena, Ziad, Manus, Alexandra, Alice) into fewer multi-role agents, route marketing coordinators through Ziad as a single gateway instead of three separate sessions. Less surface area, same output, lower cost.</div>
+                    </div>
+                </div>
+
+                <!-- Goals (center) -->
+                <div class="home-card">
+                    <div class="home-card-header">🎯 Long-Term Goals</div>
+                    <div class="goals-list" id="goals-list">${goalItems}</div>
+                    <div class="goal-add-row">
+                        <input type="text" id="goal-input" class="goal-input" placeholder="Add a new goal..." onkeydown="if(event.key==='Enter')addGoal()">
+                        <button class="goal-add-btn" onclick="addGoal()">+</button>
+                    </div>
+                </div>
+
+                <!-- Activity Graph -->
+                ${renderActivityChart()}
+
+                <!-- Earnings Calendar -->
+                ${renderEarnings()}
+            </div>
+        `;
+    }
+
+    // Goal management
+    function addGoal() {
+        const input = document.getElementById('goal-input');
+        const text = input.value.trim();
+        if (!text) return;
+        const goals = getGoals();
+        goals.push({ id: Date.now(), text });
+        saveGoals(goals);
+        render();
+    }
+
+    function removeGoal(id) {
+        const goals = getGoals().filter(g => g.id !== id);
+        saveGoals(goals);
+        render();
+    }
+
+    // Drag and drop for goals
+    let dragSrcIdx = null;
+    document.addEventListener('dragstart', e => {
+        const item = e.target.closest('.goal-item');
+        if (!item) return;
+        dragSrcIdx = parseInt(item.dataset.goalIdx);
+        e.dataTransfer.effectAllowed = 'move';
+        item.style.opacity = '0.4';
+    });
+    document.addEventListener('dragover', e => {
+        const item = e.target.closest('.goal-item');
+        if (!item) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        item.style.borderTop = '2px solid var(--accent)';
+    });
+    document.addEventListener('dragleave', e => {
+        const item = e.target.closest('.goal-item');
+        if (item) item.style.borderTop = '';
+    });
+    document.addEventListener('drop', e => {
+        const item = e.target.closest('.goal-item');
+        if (!item || dragSrcIdx === null) return;
+        e.preventDefault();
+        item.style.borderTop = '';
+        const dropIdx = parseInt(item.dataset.goalIdx);
+        if (dragSrcIdx === dropIdx) return;
+        const goals = getGoals();
+        const [moved] = goals.splice(dragSrcIdx, 1);
+        goals.splice(dropIdx, 0, moved);
+        saveGoals(goals);
+        dragSrcIdx = null;
+        render();
+    });
+    document.addEventListener('dragend', e => {
+        const item = e.target.closest('.goal-item');
+        if (item) item.style.opacity = '1';
+        dragSrcIdx = null;
+    });
+
+    function renderDept(dept) {
+        const deptAgents = agents.filter(a => a.dept === dept.id);
+        const extraLink = dept.id === 'quant' ? '<a href="orora-capital.html" style="font-size:0.7rem;color:var(--orange);text-decoration:none;border:1px solid rgba(249,115,22,0.2);padding:3px 10px;border-radius:12px;margin-left:8px" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'rgba(249,115,22,0.2)\'">Trading Desk →</a>' : '';
+        return `
+            <div class="dept-section ${dept.class}">
+                <div class="dept-header">
+                    <h3>${dept.name}${extraLink}</h3>
+                    <span class="dept-count">${deptAgents.length}</span>
+                </div>
+                <div class="dept-agents">
+                    ${deptAgents.map(a => renderAgentRow(a)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCompanyGroup(comp) {
+        const compAgents = agents.filter(a => getCompanyId(a) === comp.id);
+        const extraLink = comp.id === 'orora-capital' ? '<a href="orora-capital.html" style="font-size:0.7rem;color:var(--orange);text-decoration:none;border:1px solid rgba(249,115,22,0.2);padding:3px 10px;border-radius:12px;margin-left:8px" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'rgba(249,115,22,0.2)\'">Trading Desk →</a>' : '';
+        return `
+            <div class="dept-section ${comp.class}">
+                <div class="dept-header">
+                    <h3>${comp.name}${extraLink}</h3>
+                    <span class="dept-count">${compAgents.length}</span>
+                </div>
+                <div class="dept-agents">
+                    ${compAgents.map(a => renderAgentRow(a)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderAgentRow(agent) {
+        const statusClass = `status-${agent.status}`;
+        return `
+            <div class="agent-row" data-agent-id="${agent.id}">
+                <div class="agent-emoji">
+                    ${agent.emoji}
+                    <div class="online-dot ${statusClass}"></div>
+                </div>
+                <div class="agent-info">
+                    <div class="agent-name">${agent.name}</div>
+                    <div class="agent-role-small">${agent.role} · ${agent.company}</div>
+                </div>
+                <div class="agent-meta">
+                    <span class="agent-model-tag">${agent.model}</span>
+                    <span class="agent-channels-tag">${agent.channels[0]}${agent.channels.length > 1 ? ` +${agent.channels.length-1}` : ''}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCronCard(job) {
+        const statusDot = job.status === 'ok' ? 'cron-ok' : job.status === 'error' ? 'cron-error' : 'cron-pending';
+        const statusLabel = job.status === 'ok' ? 'Healthy' : job.status === 'error' ? `${job.errors} errors` : 'Pending';
+        const agent = agents.find(a => a.id === job.agent);
+        return `
+            <div class="cron-card">
+                <div class="cron-card-top">
+                    <div class="cron-card-name"><span class="emoji">${job.emoji}</span> ${job.name}</div>
+                    <span class="cron-enabled ${job.enabled ? 'on' : 'off'}">${job.enabled ? 'Active' : 'Disabled'}</span>
+                </div>
+                <div class="cron-card-details">
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Schedule</span>
+                        <span class="cron-detail-value">${job.schedule}</span>
+                    </div>
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Timezone</span>
+                        <span class="cron-detail-value">${job.tz}</span>
+                    </div>
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Status</span>
+                        <span class="cron-detail-value ${job.status}"><span class="cron-status-dot ${statusDot}" style="display:inline-block;margin-right:4px"></span>${statusLabel}</span>
+                    </div>
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Agent</span>
+                        <span class="cron-detail-value">${agent ? agent.emoji + ' ' + agent.name : job.agent}</span>
+                    </div>
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Delivery</span>
+                        <span class="cron-detail-value">${job.delivery}</span>
+                    </div>
+                    <div class="cron-detail">
+                        <span class="cron-detail-label">Model</span>
+                        <span class="cron-detail-value">${job.model}</span>
+                    </div>
+                </div>
+                <div class="cron-card-bottom">
+                    <span class="cron-next-run">⏭ Next: ${job.nextRun}</span>
+                    <span class="cron-model-tag">${job.id}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTaskColumn(className, title, items) {
+        return `
+            <div class="task-column ${className}">
+                <div class="task-column-header">
+                    <h3>${title}</h3>
+                    <span class="count">${items.length}</span>
+                </div>
+                <div class="task-list">
+                    ${items.map(t => {
+                        const agent = agents.find(a => a.id === t.agent);
+                        return `
+                            <div class="task-item">
+                                <div class="task-item-title">${t.title}</div>
+                                <div class="task-item-meta">
+                                    <span class="task-tag agent">${agent ? agent.emoji + ' ' + agent.name : t.agent}</span>
+                                    <span class="task-tag company">${t.company}</span>
+                                    <span class="task-tag priority-${t.priority}">${t.priority.toUpperCase()}</span>
+                                    <span class="task-date">${t.date}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTimeline() {
+        const events = [
+            { time:'Feb 24, 3:00 PM', title:'European Markets Scanner', desc:'Daily drop scan running — top 5 losers + trade recs', color:'var(--red)' },
+            { time:'Feb 24, 10:30 AM', title:'Daily Standup Posted', desc:'Team task check-in to Tradyom Slack', color:'var(--green)' },
+            { time:'Feb 24, 8:00 AM', title:'Nabu GM Posted', desc:'Discord daily greeting + market take', color:'var(--cyan)' },
+            { time:'Feb 24, 7:00 AM', title:'Mark TA + Henry FA', desc:'Daily technical & fundamental analysis delivered to Nabu', color:'var(--blue)' },
+            { time:'Feb 23, All Day', title:'LLM Model Policy Enforced', desc:'Opus 4.6 reserved for strategy only. All agents updated.', color:'var(--accent)' },
+            { time:'Feb 22', title:'Marketing Day 3 Complete', desc:'Ziad, Kevin, Liam, Jason — 90-day plans finalized', color:'var(--green)' },
+            { time:'Feb 21', title:'Nabu Meeting 3', desc:'Gold long, VERX long, BMBL put, BTC ladder locked. 4 bot architectures designed.', color:'var(--gold)' },
+            { time:'Feb 20', title:'Marketing Division Created', desc:'Ziad (CMO), Kevin, Liam, Jason deployed', color:'var(--purple)' },
+            { time:'Feb 19', title:'Nabu Intel Pipeline Launched', desc:'Daily Mark TA + Henry FA crons, weekly training — all operational', color:'var(--cyan)' },
+            { time:'Feb 15', title:'Helen Deployed', desc:'Writer & Mythologist for Velved IP. 24h research sprint.', color:'var(--purple)' },
+            { time:'Feb 14', title:'24-Month Strategic Plan', desc:'$20M+ target by Feb 2028. Tier system for portfolio companies.', color:'var(--gold)' },
+        ];
+        return `
+            <div class="timeline">
+                ${events.map(e => `
+                    <div class="timeline-item">
+                        <div class="timeline-time">${e.time}</div>
+                        <div class="timeline-title">${e.title}</div>
+                        <div class="timeline-desc">${e.desc}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // ─── DRAWER ───
+    function openDrawer(agent) {
+        selectedAgent = agent;
+        const drawer = document.getElementById('drawer');
+        const overlay = document.getElementById('overlay');
+        const agentCrons = cronJobs.filter(j => j.agent === agent.id);
+        const agentTasks = [...tasks.pending, ...tasks.inProgress].filter(t => t.agent === agent.id);
+        const reportsTo = reportingLines.filter(r => r.from === agent.id).map(r => agents.find(a => a.id === r.to)).filter(Boolean);
+        const directReports = reportingLines.filter(r => r.to === agent.id).map(r => agents.find(a => a.id === r.from)).filter(Boolean);
+
+        drawer.innerHTML = `
+            <div class="drawer-header">
+                <div class="drawer-agent-header">
+                    <div class="drawer-emoji">${agent.emoji}</div>
+                    <div>
+                        <div class="drawer-name">${agent.name}</div>
+                        <div class="drawer-role">${agent.role}</div>
+                    </div>
+                </div>
+                <button class="drawer-close" id="drawer-close">×</button>
+            </div>
+            <div class="drawer-body">
+                <div class="drawer-section">
+                    <h4>Details</h4>
+                    <div class="drawer-detail-grid">
+                        <div class="drawer-detail">
+                            <div class="drawer-detail-label">Company</div>
+                            <div class="drawer-detail-value">${agent.company}</div>
+                        </div>
+                        <div class="drawer-detail">
+                            <div class="drawer-detail-label">Model</div>
+                            <div class="drawer-detail-value">${agent.model}</div>
+                        </div>
+                        <div class="drawer-detail">
+                            <div class="drawer-detail-label">Status</div>
+                            <div class="drawer-detail-value" style="color:${agent.status==='online'?'var(--green)':agent.status==='standby'?'var(--gold)':'var(--blue)'};text-transform:capitalize">${agent.status}</div>
+                        </div>
+                        <div class="drawer-detail">
+                            <div class="drawer-detail-label">Channels</div>
+                            <div class="drawer-detail-value">${agent.channels.join(', ')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${reportsTo.length > 0 ? `
+                <div class="drawer-section">
+                    <h4>Reports To</h4>
+                    ${reportsTo.map(a => `<div class="agent-row" style="padding:8px"><div class="agent-emoji" style="width:30px;height:30px;font-size:1rem">${a.emoji}</div><div class="agent-info"><div class="agent-name" style="font-size:0.8rem">${a.name}</div><div class="agent-role-small">${a.role}</div></div></div>`).join('')}
+                </div>` : ''}
+
+                ${directReports.length > 0 ? `
+                <div class="drawer-section">
+                    <h4>Direct Reports</h4>
+                    ${directReports.map(a => `<div class="agent-row" style="padding:8px"><div class="agent-emoji" style="width:30px;height:30px;font-size:1rem">${a.emoji}</div><div class="agent-info"><div class="agent-name" style="font-size:0.8rem">${a.name}</div><div class="agent-role-small">${a.role}</div></div></div>`).join('')}
+                </div>` : ''}
+
+                <div class="drawer-section">
+                    <h4>Cron Jobs (${agentCrons.length})</h4>
+                    ${agentCrons.length > 0 ? agentCrons.map(j => `
+                        <div class="drawer-cron-item">
+                            <div class="cron-item-header">
+                                <span class="cron-item-name">${j.emoji} ${j.name.replace(/^[^—]+— /, '')}</span>
+                                <span class="cron-item-schedule">${j.schedule}</span>
+                            </div>
+                            <div class="cron-item-status">
+                                <span class="cron-status-dot ${j.status === 'ok' ? 'cron-ok' : j.status === 'error' ? 'cron-error' : 'cron-pending'}"></span>
+                                ${j.status === 'ok' ? 'Healthy' : j.status === 'error' ? j.errors + ' errors' : 'Pending'}
+                                · Next: ${j.nextRun}
+                            </div>
+                        </div>
+                    `).join('') : '<div class="drawer-empty">No cron jobs assigned</div>'}
+                </div>
+
+                <div class="drawer-section">
+                    <h4>Active Tasks (${agentTasks.length})</h4>
+                    ${agentTasks.length > 0 ? agentTasks.map(t => `
+                        <div class="drawer-cron-item">
+                            <div class="cron-item-header">
+                                <span class="cron-item-name">${t.title}</span>
+                                <span class="task-tag priority-${t.priority}" style="font-size:0.6rem">${t.priority.toUpperCase()}</span>
+                            </div>
+                            <div class="cron-item-status">${t.date}</div>
+                        </div>
+                    `).join('') : '<div class="drawer-empty">No active tasks</div>'}
+                </div>
+            </div>
+        `;
+
+        drawer.classList.add('open');
+        overlay.classList.add('show');
+
+        document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);
+    }
+
+    function closeDrawer() {
+        document.getElementById('drawer').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+        selectedAgent = null;
+    }
+
+    // ─── CLOCK ───
+    function startClock() {
+        function update() {
+            const el = document.getElementById('clock');
+            if (el) {
+                const now = new Date();
+                el.textContent = now.toLocaleString('en-US', {
+                    timeZone: 'Asia/Dubai',
+                    weekday: 'short', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                }) + ' GST';
+            }
+        }
+        update();
+        setInterval(update, 1000);
+    }
+
+    // ─── KEYBOARD ───
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeDrawer();
+        if (e.key === '1') { activeTab = 'home'; render(); }
+        if (e.key === '2') { activeTab = 'agents'; render(); }
+        if (e.key === '3') { activeTab = 'cron'; render(); }
+        if (e.key === '4') { activeTab = 'tasks'; render(); }
+        if (e.key === '5') { activeTab = 'timeline'; render(); }
+        if (e.key === '6') { activeTab = 'orgchart'; render(); }
+        if (e.key === '7') { activeTab = 'taskboard'; render(); }
+        if (e.key === '8') { activeTab = 'officemap'; render(); }
+    });
+
+    // ─── INIT ───
+    render();
+    </script>
+</body>
+</html>
