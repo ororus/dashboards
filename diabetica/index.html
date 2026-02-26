@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diabetica — Smart Food Database</title>
+<title>Diabetica — Ask Gio</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -232,8 +232,13 @@ body::before {
 
 <div class="container">
     <div class="header">
-        <div class="logo">🩺 Diabetica</div>
-        <div class="subtitle">Smart food database — sugar levels, insulin estimates, and diabetic-friendly scoring</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px">
+            <img src="gio-avatar.png" alt="Gio" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--green);object-fit:cover;" />
+            <div>
+                <div class="logo">Diabetica</div>
+                <div class="subtitle">Ask Gio — your diabetic-friendly food advisor</div>
+            </div>
+        </div>
     </div>
 
     <!-- Image analysis panel -->
@@ -251,14 +256,17 @@ body::before {
     <!-- Search -->
     <div class="search-area">
         <div style="display:flex;gap:8px;margin-bottom:12px">
-            <button class="mode-btn active" id="modeSearch" onclick="setMode('search')">🔍 Search by Name</button>
-            <button class="mode-btn" id="modeScan" onclick="setMode('scan')">📷 Scan Image</button>
+            <button class="mode-btn active" id="modeSearch" onclick="setMode('search')">🔍 Ask Gio</button>
+            <button class="mode-btn" id="modeScan" onclick="setMode('scan')">📷 Scan Food</button>
         </div>
         <div id="searchMode">
-            <div class="search-input-wrap">
-                <span class="search-icon">🔍</span>
-                <input type="text" class="search-input" id="searchInput"
-                    placeholder="Type any food, brand, meal... (e.g. 'lindt', 'pasta', 'shawarma')" autofocus />
+            <div class="search-input-wrap" style="display:flex;align-items:center;gap:12px">
+                <img src="gio-avatar.png" alt="Gio" style="width:40px;height:40px;border-radius:50%;border:1.5px solid var(--green);object-fit:cover;flex-shrink:0;" />
+                <div style="flex:1;position:relative">
+                    <span class="search-icon" style="left:14px">🔍</span>
+                    <input type="text" class="search-input" id="searchInput"
+                        placeholder="Ask Gio... (e.g. 'lindt 85%', 'shawarma', 'nutella')" autofocus />
+                </div>
             </div>
         </div>
         <div id="scanMode" style="display:none">
