@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ororus HQ — Virtual Office</title>
+<style>
+:root {
+    --bg: #06060b;
+    --text: #e8e8ed;
+    --text-dim: rgba(255,255,255,0.5);
+    --accent: #7c5cfc;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Inter',-apple-system,sans-serif; color:var(--text); overflow:hidden; height:100vh; }
+canvas { display:block; width:100%; height:100%; }
+
+.tooltip {
+    position:fixed; pointer-events:none; background:rgba(10,10,20,0.95); border:1px solid rgba(255,255,255,0.15);
+    border-radius:10px; padding:10px 14px; font-size:12px; z-index:100; opacity:0; transition:opacity 0.15s;
+    backdrop-filter:blur(12px); max-width:240px;
+}
+.tooltip.show { opacity:1; }
+.tooltip .name { font-weight:600; font-size:14px; margin-bottom:2px; }
+.tooltip .role { color:rgba(255,255,255,0.45); font-size:11px; }
+.tooltip .activity { margin-top:6px; font-size:11px; color:rgba(255,255,255,0.6); border-top:1px solid rgba(255,255,255,0.08); padding-top:6px; }
+.tooltip .status-line { display:flex; align-items:center; gap:6px; margin-top:4px; font-size:11px; }
+.tooltip .dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+.clock {
+    position:fixed; top:14px; right:18px; font-family:'JetBrains Mono',monospace; font-size:12px;
+    color:rgba(255,255,255,0.35); letter-spacing:1px;
+}
+.label-hq {
+    position:fixed; top:14px; left:50%; transform:translateX(-50%);
+    font-family:'Orbitron',monospace; font-size:13px; letter-spacing:3px; color:rgba(255,255,255,0.25);
+    text-transform:uppercase;
+}
+.legend {
+    position:fixed; bottom:14px; left:14px; background:rgba(10,10,20,0.8); border:1px solid rgba(255,255,255,0.08);
+    border-radius:8px; padding:10px 14px; font-size:10px; display:flex; gap:14px; backdrop-filter:blur(8px);
+}
+.legend-item { display:flex; align-items:center; gap:5px; color:rgba(255,255,255,0.4); }
+.legend-color { width:8px; height:8px; border-radius:3px; }
+
+.log-panel {
+    position:fixed; top:40px; right:16px; width:240px; font-size:10px;
+}
+.log-entry {
+    color:rgba(255,255,255,0.35); margin-bottom:4px; font-family:'JetBrains Mono',monospace;
+    transition: opacity 0.5s;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="label-hq">⚡ Ororus HQ</div>
+<div class="clock" id="clock"></div>
+<div class="tooltip" id="tip"></div>
+<div class="log-panel" id="logPanel"></div>
+<div class="legend">
+    <div class="legend-item"><div class="legend-color" style="background:rgba(255,255,255,0.2)"></div>Idle</div>
+    <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>In Meeting</div>
+</div>
+
+<script>
+const C = document.getElementById('canvas');
+const ctx = C.getContext('2d');
+let W, H, sc;
+function resize() { W = C.width = window.innerWidth; H = C.height = window.innerHeight; sc = Math.min(W/1100, H/700); }
+resize();
+window.addEventListener('resize', resize);
+
+// ── Real schedule data (Dubai time, GMT+4) ──
+// Each entry: { hour, min, duration (min), agents[], type: 'meeting'|'out'|'work', label }
+const SCHEDULE = [
+    // Daily meetings Mon-Fri
+    { days:[1,2,3,4,5], hour:7, min:20, dur:15, agents:['nabu','mark','henry'], type:'meeting', label:'Morning briefing sync' },
+    { days:[1,2,3,4,5], hour:14, min:0, dur:15, agents:['ziad','kevin','jason'], type:'meeting', label:'Marketing huddle' },
+    { days:[1,2,3,4,5], hour:16, min:0, dur:20, agents:['vaya','athena'], type:'meeting', label:'Afternoon ops review' },
+    // Monday
+    { days:[1], hour:8, min:0, dur:30, agents:['nabu','mark','henry'], type:'meeting', label:'Weekly Nabu training session' },
+    { days:[1], hour:9, min:30, dur:20, agents:['vaya','ziad','kevin','liam','jason'], type:'meeting', label:'Marketing weekly sync' },
+    // Friday
+    { days:[5], hour:9, min:0, dur:15, agents:['nabu','mark','henry','vaya'], type:'meeting', label:'Friday AI Digest prep' },
+];
+
+// ── Office Layout ──
+const EXIT = { x: 540, y: 650 }; // Door at bottom center
+
+const ROOMS = [
+    // Exec wing
+    { id:'exec-vaya', x:40, y:60, w:140, h:110, label:'Vaya', type:'office', color:'#7c5cfc' },
+    { id:'exec-hektor', x:40, y:190, w:140, h:110, label:'Hektor', type:'office', color:'#22d3ee' },
+    // War room
+    { id:'meeting', x:250, y:80, w:200, h:170, label:'War Room', type:'meeting', color:'#f59e0b' },
+    // Quant wing
+    { id:'off-nabu', x:520, y:60, w:130, h:100, label:'Nabu', type:'office', color:'#10b981' },
+    { id:'off-mark', x:670, y:60, w:115, h:100, label:'Mark', type:'office', color:'#3b82f6' },
+    { id:'off-henry', x:805, y:60, w:115, h:100, label:'Henry', type:'office', color:'#3b82f6' },
+    // Marketing
+    { id:'off-ziad', x:40, y:370, w:120, h:95, label:'Ziad', type:'office', color:'#f97316' },
+    { id:'off-kevin', x:180, y:370, w:110, h:95, label:'Kevin', type:'office', color:'#f97316' },
+    { id:'off-liam', x:310, y:370, w:110, h:95, label:'Liam', type:'office', color:'#a855f7' },
+    { id:'off-jason', x:440, y:370, w:110, h:95, label:'Jason', type:'office', color:'#f97316' },
+    // Ops
+    { id:'off-athena', x:610, y:370, w:130, h:95, label:'Athena', type:'office', color:'#22d3ee' },
+    { id:'off-william', x:760, y:370, w:115, h:95, label:'William', type:'office', color:'#ef4444' },
+    // Creative
+    { id:'off-helen', x:520, y:200, w:120, h:95, label:'Helen', type:'office', color:'#ec4899' },
+    { id:'off-mia', x:660, y:200, w:120, h:95, label:'Mia', type:'office', color:'#ec4899' },
+    // Invest
+    { id:'off-manus', x:810, y:200, w:115, h:95, label:'Manus', type:'office', color:'#a855f7' },
+    // Lounge
+    { id:'lounge', x:250, y:280, w:180, h:70, label:'☕ Lounge', type:'lounge', color:'rgba(255,255,255,0.06)' },
+    // Hallways
+    { id:'hall-h', x:40, y:320, w:890, h:30, label:'', type:'hall' },
+    { id:'hall-v', x:200, y:60, w:28, h:290, label:'', type:'hall' },
+    { id:'hall-v2', x:480, y:60, w:28, h:290, label:'', type:'hall' },
+    // (no exit — agents stay in office)
+];
+
+const meetingRoom = ROOMS.find(r => r.id === 'meeting');
+
+// ── Agents ──
+const AGENTS = [
+    { id:'vaya', name:'Vaya', emoji:'⚡', role:'Chief Strategic Officer', company:'Ororus Inc.', color:'#7c5cfc', home:'exec-vaya' },
+    { id:'hektor', name:'Hektor', emoji:'🧠', role:'Advisor', company:'Ororus Inc.', color:'#22d3ee', home:'exec-hektor' },
+    { id:'nabu', name:'Nabu', emoji:'🧮', role:'CIO & Head Quant', company:'Orora Capital', color:'#10b981', home:'off-nabu' },
+    { id:'mark', name:'Mark', emoji:'📊', role:'Quant & TA', company:'Orora Capital', color:'#3b82f6', home:'off-mark' },
+    { id:'henry', name:'Henry', emoji:'📰', role:'Fundamental Analyst', company:'Orora Capital', color:'#3b82f6', home:'off-henry' },
+    { id:'athena', name:'Athena', emoji:'🦉', role:'Business Analyst', company:'Ororus Inc.', color:'#22d3ee', home:'off-athena' },
+    { id:'william', name:'William', emoji:'⚖️', role:'Paralegal & Admin', company:'Lexyom', color:'#ef4444', home:'off-william' },
+    { id:'ziad', name:'Ziad', emoji:'🎯', role:'CMO', company:'Ororus Inc.', color:'#f97316', home:'off-ziad' },
+    { id:'kevin', name:'Kevin', emoji:'📈', role:'Marketing — Tradyom', company:'Tradyom', color:'#f97316', home:'off-kevin' },
+    { id:'liam', name:'Liam', emoji:'💜', role:'Marketing — Blaxity', company:'Blaxity', color:'#a855f7', home:'off-liam' },
+    { id:'jason', name:'Jason', emoji:'⚖️', role:'Marketing — Lexfeeld', company:'Lexyom', color:'#f97316', home:'off-jason' },
+    { id:'helen', name:'Helen', emoji:'✍️', role:'Writer & Mythologist', company:'Velved', color:'#ec4899', home:'off-helen' },
+    { id:'mia', name:'Mia', emoji:'🍍', role:'Community Coordinator', company:'Blaxity', color:'#ec4899', home:'off-mia' },
+    { id:'manus', name:'Manus', emoji:'🏛️', role:'GM — Orora Invest', company:'Orora Invest', color:'#a855f7', home:'off-manus' },
+];
+
+AGENTS.forEach(a => {
+    const room = ROOMS.find(r => r.id === a.home);
+    a.x = room.x + room.w/2;
+    a.y = room.y + room.h/2;
+    a.tx = a.x; a.ty = a.y;
+    a.state = 'desk'; // desk | walking | meeting | out | returning
+    a.activity = null;
+    a.visible = true;
+    a.bob = Math.random() * Math.PI * 2;
+    a.path = []; // waypoints to follow
+    a.outTimer = 0;
+});
+
+// ── Pathfinding (simple waypoint system) ──
+function pathTo(a, tx, ty) {
+    // Route through hallway: go to nearest hall, walk hall, go to target
+    const hallY = 335;
+    const points = [];
+
+    // If going to exit
+    if (ty > 480) {
+        points.push({ x: a.x, y: hallY });
+        points.push({ x: 505, y: hallY });
+        points.push({ x: 505, y: 520 });
+        points.push({ x: tx, y: ty });
+        return points;
+    }
+
+    // If in different vertical zone, use hallway
+    if (Math.abs(a.y - ty) > 100) {
+        points.push({ x: a.x, y: hallY });
+        points.push({ x: tx, y: hallY });
+    }
+    points.push({ x: tx, y: ty });
+    return points;
+}
+
+function sendToMeeting(a) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = 35 + Math.random() * 20;
+    const mx = meetingRoom.x + meetingRoom.w/2 + Math.cos(angle) * r;
+    const my = meetingRoom.y + meetingRoom.h/2 + Math.sin(angle) * r;
+    a.path = pathTo(a, mx, my);
+    a.state = 'walking';
+    a.targetState = 'meeting';
+}
+
+function sendOut(a) {
+    a.path = pathTo(a, EXIT.x, EXIT.y);
+    a.state = 'walking';
+    a.targetState = 'out';
+}
+
+function sendHome(a) {
+    const room = ROOMS.find(r => r.id === a.home);
+    const hx = room.x + room.w/2 + (Math.random()-0.5)*30;
+    const hy = room.y + room.h/2 + (Math.random()-0.5)*20;
+    if (!a.visible) {
+        // Coming back from outside — appear at exit
+        a.x = EXIT.x; a.y = EXIT.y; a.visible = true;
+    }
+    a.path = pathTo(a, hx, hy);
+    a.state = 'walking';
+    a.targetState = 'desk';
+}
+
+// ── Schedule Engine ──
+let activeEvents = new Map(); // eventKey -> { agents, endTime, type, label }
+const logEntries = [];
+
+function addLog(msg) {
+    logEntries.unshift({ msg, time: Date.now(), alpha: 1 });
+    if (logEntries.length > 8) logEntries.pop();
+}
+
+function getTimeStr() {
+    const d = new Date();
+    return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false, timeZone:'Asia/Dubai' });
+}
+function getDubaiNow() {
+    const d = new Date();
+    const s = d.toLocaleString('en-US', { timeZone:'Asia/Dubai', hour12:false });
+    const p = new Date(s);
+    return { hour: p.getHours(), min: p.getMinutes(), day: p.getDay(), totalMin: p.getHours()*60+p.getMinutes() };
+}
+
+// Real time only — no acceleration
+function getSimTime() {
+    return getDubaiNow();
+}
+
+// Check schedule and trigger events
+function checkSchedule() {
+    const now = getSimTime();
+    const nowMin = now.totalMin;
+
+    for (const ev of SCHEDULE) {
+        if (!ev.days.includes(now.day)) continue;
+        const evStart = ev.hour * 60 + ev.min;
+        const evEnd = evStart + ev.dur;
+        const key = `${ev.hour}:${ev.min}:${ev.agents.join(',')}`;
+
+        if (nowMin >= evStart && nowMin < evEnd) {
+            if (!activeEvents.has(key)) {
+                // Trigger event
+                activeEvents.set(key, { endMin: evEnd, type: ev.type, label: ev.label, agents: ev.agents });
+                const names = ev.agents.map(id => {
+                    const a = AGENTS.find(x => x.id === id);
+                    return a ? a.emoji + ' ' + a.name : id;
+                }).join(', ');
+
+                addLog(`📋 ${ev.label}`);
+                ev.agents.forEach(id => {
+                    const a = AGENTS.find(x => x.id === id);
+                    if (a) { a.activity = ev.label; sendToMeeting(a); }
+                });
+            }
+        } else if (activeEvents.has(key)) {
+            // Event ended
+            const ended = activeEvents.get(key);
+            activeEvents.delete(key);
+            ended.agents.forEach(id => {
+                const a = AGENTS.find(x => x.id === id);
+                if (a) {
+                    a.activity = null;
+                    sendHome(a);
+                }
+            });
+            addLog(`✅ ${ended.label} done`);
+        }
+    }
+}
+
+// ── Movement ──
+function moveAgent(a) {
+    if (a.path.length > 0) {
+        const wp = a.path[0];
+        const dx = wp.x - a.x, dy = wp.y - a.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const speed = 1.8;
+        if (dist < speed) {
+            a.x = wp.x; a.y = wp.y;
+            a.path.shift();
+            if (a.path.length === 0) {
+                // Arrived
+                if (a.targetState === 'out') {
+                    a.visible = false;
+                    a.state = 'out';
+                } else {
+                    a.state = a.targetState || 'desk';
+                }
+            }
+        } else {
+            a.x += (dx/dist) * speed;
+            a.y += (dy/dist) * speed;
+        }
+    }
+
+    // No idle movement — agents stay still at desk
+}
+
+// ── Drawing ──
+function drawRoom(r) {
+    const rx=r.x*sc, ry=r.y*sc, rw=r.w*sc, rh=r.h*sc, rad=6*sc;
+    if (r.type==='hall') { ctx.fillStyle='rgba(255,255,255,0.015)'; ctx.fillRect(rx,ry,rw,rh); return; }
+    if (r.type==='exit') {
+        ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rad);
+        ctx.fillStyle='rgba(239,68,68,0.04)'; ctx.fill();
+        ctx.strokeStyle='rgba(239,68,68,0.15)'; ctx.lineWidth=1; ctx.stroke();
+        ctx.fillStyle='rgba(239,68,68,0.3)'; ctx.font=`${11*sc}px Inter`; ctx.textAlign='center';
+        ctx.fillText(r.label, rx+rw/2, ry+rh/2+4*sc);
+        return;
+    }
+
+    ctx.beginPath(); ctx.roundRect(rx,ry,rw,rh,rad);
+    const hasActive = r.type==='meeting' && [...activeEvents.values()].some(e=>e.type==='meeting');
+    ctx.fillStyle = r.type==='meeting' && hasActive ? 'rgba(245,158,11,0.05)' : 'rgba(255,255,255,0.02)';
+    ctx.fill();
+    ctx.strokeStyle = r.type==='meeting' && hasActive ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.07)';
+    ctx.lineWidth=1; ctx.stroke();
+
+    if (r.label) {
+        ctx.fillStyle = r.type==='meeting' ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.18)';
+        ctx.font=`${10*sc}px Inter`; ctx.textAlign='center';
+        ctx.fillText(r.label, rx+rw/2, ry+14*sc);
+    }
+
+    if (r.type==='office') {
+        const dw=36*sc, dh=16*sc;
+        ctx.fillStyle='rgba(255,255,255,0.03)';
+        ctx.beginPath(); ctx.roundRect(rx+rw/2-dw/2, ry+rh-30*sc, dw, dh, 3*sc); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.stroke();
+        // Monitor
+        ctx.fillStyle='rgba(255,255,255,0.04)';
+        ctx.fillRect(rx+rw/2-8*sc, ry+rh-40*sc, 16*sc, 8*sc);
+    }
+
+    if (r.type==='meeting') {
+        ctx.beginPath(); ctx.ellipse(rx+rw/2,ry+rh/2+5*sc,45*sc,28*sc,0,0,Math.PI*2);
+        ctx.fillStyle=hasActive?'rgba(245,158,11,0.03)':'rgba(255,255,255,0.015)'; ctx.fill();
+        ctx.strokeStyle=hasActive?'rgba(245,158,11,0.12)':'rgba(255,255,255,0.04)'; ctx.stroke();
+        // Chairs
+        for (let i=0;i<6;i++){
+            const ang=(i/6)*Math.PI*2, cr=55*sc;
+            ctx.beginPath(); ctx.arc(rx+rw/2+Math.cos(ang)*cr, ry+rh/2+5*sc+Math.sin(ang)*(cr*0.6), 4*sc, 0, Math.PI*2);
+            ctx.fillStyle='rgba(255,255,255,0.025)'; ctx.fill();
+        }
+    }
+
+    if (r.type==='lounge') {
+        ctx.fillStyle='rgba(255,255,255,0.025)';
+        ctx.beginPath(); ctx.roundRect(rx+15*sc,ry+22*sc,45*sc,28*sc,6*sc); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(rx+100*sc,ry+22*sc,45*sc,28*sc,6*sc); ctx.fill();
+    }
+}
+
+function drawAgent(a, t) {
+    if (!a.visible) return;
+    const isMoving = a.path.length > 0;
+    const bob = isMoving ? Math.sin(a.bob + t*0.04) * 3 : 0;
+    const ax=a.x*sc, ay=(a.y+bob)*sc, r=13*sc;
+
+    // Glow
+    const grd = ctx.createRadialGradient(ax,ay,0,ax,ay,r*2.5);
+    const glowAlpha = a.state==='working' ? '25' : '18';
+    grd.addColorStop(0, a.color+glowAlpha);
+    grd.addColorStop(1,'transparent');
+    ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(ax,ay,r*2.5,0,Math.PI*2); ctx.fill();
+
+    // Walking trail
+    if (isMoving) {
+        ctx.beginPath(); ctx.arc(ax,ay+2*sc,r*0.6,0,Math.PI*2);
+        ctx.fillStyle=a.color+'08'; ctx.fill();
+    }
+
+    // Body circle
+    ctx.beginPath(); ctx.arc(ax,ay,r,0,Math.PI*2);
+    ctx.fillStyle=a.color+'18'; ctx.fill();
+    ctx.strokeStyle=a.color+(a.state==='meeting'?'aa':'66');
+    ctx.lineWidth=1.5*sc; ctx.stroke();
+
+    // Pulse ring for meeting
+    if (a.state==='meeting' && !isMoving) {
+        const pulse = (Math.sin(t*0.05+a.bob)*0.5+0.5);
+        ctx.beginPath(); ctx.arc(ax,ay,r+4*sc+pulse*6*sc,0,Math.PI*2);
+        ctx.strokeStyle=a.color+Math.round(20-pulse*15).toString(16).padStart(2,'0');
+        ctx.lineWidth=1; ctx.stroke();
+    }
+
+    // Emoji
+    ctx.font=`${15*sc}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(a.emoji, ax, ay);
+
+    // Name
+    ctx.font=`600 ${8.5*sc}px Inter`; ctx.fillStyle=a.color+'cc'; ctx.textAlign='center';
+    ctx.fillText(a.name, ax, ay+r+10*sc);
+
+    // Status dot
+    let dotCol = a.state==='meeting' ? '#3b82f6' : 'rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.arc(ax+r*0.75, ay-r*0.75, 3*sc, 0, Math.PI*2);
+    ctx.fillStyle=dotCol; ctx.fill();
+
+    // (no working indicator — agents idle at desk)
+}
+
+// "Out" indicators at exit
+function drawOutAgents() {
+    const outAgents = AGENTS.filter(a => !a.visible);
+    if (outAgents.length === 0) return;
+    const ex = 490*sc, ey = 560*sc;
+    ctx.font = `${9*sc}px Inter`;
+    ctx.fillStyle = 'rgba(239,68,68,0.45)';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${outAgents.length} out on task`, ex+50*sc, ey);
+    outAgents.forEach((a, i) => {
+        ctx.font = `${12*sc}px serif`;
+        ctx.fillText(a.emoji, ex + 10*sc + i*22*sc, ey + 18*sc);
+    });
+}
+
+// Meeting connection lines
+function drawMeetingLines(t) {
+    const inMeeting = AGENTS.filter(a => a.state==='meeting' && a.path.length===0);
+    for (let i=0;i<inMeeting.length;i++) {
+        for (let j=i+1;j<inMeeting.length;j++) {
+            ctx.beginPath();
+            ctx.moveTo(inMeeting[i].x*sc, inMeeting[i].y*sc);
+            ctx.lineTo(inMeeting[j].x*sc, inMeeting[j].y*sc);
+            ctx.strokeStyle='rgba(245,158,11,0.06)';
+            ctx.setLineDash([3*sc,3*sc]); ctx.lineDashOffset=-t*0.3;
+            ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+}
+
+// Activity log
+function drawLog() {
+    const panel = document.getElementById('logPanel');
+    const now = Date.now();
+    panel.innerHTML = logEntries.map(l => {
+        const age = (now - l.time) / 1000;
+        const alpha = Math.max(0.15, 1 - age/120);
+        return `<div class="log-entry" style="opacity:${alpha}">${l.msg}</div>`;
+    }).join('');
+}
+
+// Clock
+function updateClock() {
+    const t = getSimTime();
+    const h = String(t.hour).padStart(2,'0'), m = String(t.min).padStart(2,'0');
+    const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    document.getElementById('clock').textContent = `${days[t.day]} ${h}:${m} GST`;
+}
+
+// ── Tooltip ──
+const tip = document.getElementById('tip');
+C.addEventListener('mousemove', e => {
+    const mx=e.clientX/sc, my=e.clientY/sc;
+    let found = null;
+    for (const a of AGENTS) {
+        if (!a.visible) continue;
+        if (Math.sqrt((a.x-mx)**2+(a.y-my)**2) < 20) { found=a; break; }
+    }
+    if (found) {
+        const stateLabel = { desk:'At Desk', walking:'Walking', meeting:'In Meeting', working:'Working', out:'Out on Task', returning:'Returning' };
+        const dotCol = { desk:'#10b981', walking:'#f59e0b', meeting:'#3b82f6', working:'#f59e0b', out:'#ef4444', returning:'#10b981' };
+        let html = `<div class="name">${found.emoji} ${found.name}</div><div class="role">${found.role} — ${found.company}</div>`;
+        html += `<div class="status-line"><div class="dot" style="background:${dotCol[found.state]||'#888'}"></div>${stateLabel[found.state]||found.state}</div>`;
+        if (found.activity) html += `<div class="activity">📌 ${found.activity}</div>`;
+        tip.innerHTML = html;
+        tip.classList.add('show');
+        tip.style.left = Math.min(e.clientX+14, W-260)+'px';
+        tip.style.top = (e.clientY-10)+'px';
+    } else {
+        tip.classList.remove('show');
+    }
+});
+
+// Also show out agents in tooltip at exit area
+C.addEventListener('mousemove', e => {
+    const mx=e.clientX/sc, my=e.clientY/sc;
+    const outAgents = AGENTS.filter(a=>!a.visible);
+    if (outAgents.length && Math.abs(mx-540)<80 && Math.abs(my-570)<30) {
+        let html = `<div class="name">🚪 Out on Task</div>`;
+        outAgents.forEach(a => {
+            html += `<div class="role">${a.emoji} ${a.name} — ${a.activity||'returning'}</div>`;
+        });
+        tip.innerHTML = html;
+        tip.classList.add('show');
+        tip.style.left = Math.min(e.clientX+14, W-260)+'px';
+        tip.style.top = (e.clientY-10)+'px';
+    }
+});
+
+// ── Main Loop ──
+let frame = 0;
+function loop() {
+    frame++;
+    ctx.clearRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,0.012)';
+    const gs=28*sc;
+    for (let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for (let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+    // Schedule check every ~30 frames
+    if (frame%30===0) checkSchedule();
+    if (frame%60===0) { updateClock(); drawLog(); }
+
+    ROOMS.forEach(drawRoom);
+    AGENTS.forEach(moveAgent);
+    drawMeetingLines(frame);
+    AGENTS.forEach(a => drawAgent(a, frame));
+    drawOutAgents();
+
+    requestAnimationFrame(loop);
+}
+
+updateClock();
+checkSchedule();
+loop();
+</script>
+</body>
+</html>

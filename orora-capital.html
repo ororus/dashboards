@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orora Capital — Trading Desk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --surface: rgba(255,255,255,0.025);
+            --surface-2: rgba(255,255,255,0.04);
+            --surface-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.07);
+            --border-hover: rgba(255,255,255,0.14);
+            --text: #e8e8ed;
+            --text-dim: rgba(255,255,255,0.5);
+            --text-muted: rgba(255,255,255,0.28);
+            --accent: #7c5cfc;
+            --accent-glow: rgba(124,92,252,0.35);
+            --cyan: #22d3ee;
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.15);
+            --green: #10b981;
+            --green-dim: rgba(16,185,129,0.12);
+            --red: #ef4444;
+            --red-dim: rgba(239,68,68,0.12);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.12);
+            --orange: #f97316;
+            --orange-dim: rgba(249,115,22,0.12);
+            --purple: #a855f7;
+            --purple-dim: rgba(168,85,247,0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content:'';
+            position:fixed; inset:0;
+            background:
+                radial-gradient(ellipse 70% 50% at 10% 90%, rgba(249,115,22,0.06), transparent),
+                radial-gradient(ellipse 60% 40% at 90% 10%, rgba(124,92,252,0.05), transparent),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(245,158,11,0.03), transparent);
+            pointer-events:none; z-index:0;
+        }
+
+        .app { position:relative; z-index:1; max-width:1500px; margin:0 auto; padding:24px; }
+
+        /* ─── Header ─── */
+        .header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:20px 0 24px; border-bottom:1px solid var(--border); margin-bottom:24px;
+        }
+        .header-left h1 {
+            font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900;
+            letter-spacing:3px;
+            background:linear-gradient(135deg, var(--orange), var(--gold), var(--accent));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .header-left .subtitle { font-size:0.75rem; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+        .back-link {
+            font-size:0.8rem; color:var(--text-dim); text-decoration:none;
+            padding:8px 16px; border:1px solid var(--border); border-radius:20px;
+            transition:all 0.2s;
+        }
+        .back-link:hover { color:var(--text); border-color:var(--border-hover); }
+        .clock { font-family:var(--mono); font-size:1rem; color:var(--orange); text-shadow:0 0 10px rgba(249,115,22,0.3); }
+
+        /* ─── Tabs ─── */
+        .tabs {
+            display:flex; gap:4px; margin-bottom:24px;
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:4px; overflow-x:auto;
+        }
+        .tab {
+            padding:10px 20px; border-radius:var(--radius-sm); border:none;
+            background:transparent; color:var(--text-dim); font-family:'Inter',sans-serif;
+            font-size:0.85rem; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .tab:hover { color:var(--text); background:rgba(255,255,255,0.04); }
+        .tab.active { color:#fff; background:var(--orange); box-shadow:0 0 20px rgba(249,115,22,0.3); }
+
+        /* ─── Panels ─── */
+        .panel { display:none; }
+        .panel.active { display:block; }
+
+        /* ─── Team Grid ─── */
+        .team-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:16px; margin-bottom:32px; }
+        .team-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+            padding:20px; transition:all 0.2s; cursor:default;
+        }
+        .team-card:hover { border-color:var(--border-hover); background:var(--surface-hover); }
+        .team-card-header { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+        .team-emoji {
+            width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+            font-size:1.6rem; background:rgba(255,255,255,0.05); flex-shrink:0; position:relative;
+        }
+        .team-emoji .dot {
+            position:absolute; bottom:2px; right:2px; width:10px; height:10px;
+            border-radius:50%; border:2px solid var(--bg);
+        }
+        .dot-online { background:var(--green); box-shadow:0 0 6px rgba(16,185,129,0.5); }
+        .dot-scheduled { background:var(--blue); }
+        .team-name { font-weight:700; font-size:1rem; }
+        .team-role { font-size:0.78rem; color:var(--text-dim); }
+        .team-desc { font-size:0.8rem; color:var(--text-dim); line-height:1.5; margin-bottom:12px; }
+        .team-tags { display:flex; flex-wrap:wrap; gap:6px; }
+        .ttag {
+            font-family:var(--mono); font-size:0.65rem; padding:3px 8px;
+            border-radius:4px; border:1px solid;
+        }
+        .ttag-model { background:rgba(124,92,252,0.08); color:var(--accent); border-color:rgba(124,92,252,0.2); }
+        .ttag-channel { background:rgba(34,211,238,0.08); color:var(--cyan); border-color:rgba(34,211,238,0.2); }
+        .ttag-cron { background:rgba(245,158,11,0.08); color:var(--gold); border-color:rgba(245,158,11,0.2); }
+
+        /* ─── Flow Diagram ─── */
+        .flow-container { position:relative; }
+        .flow-row {
+            display:flex; align-items:stretch; gap:16px; margin-bottom:16px;
+            position:relative;
+        }
+        .flow-stage {
+            flex:1; background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:18px; position:relative; transition:all 0.2s;
+        }
+        .flow-stage:hover { border-color:var(--border-hover); }
+        .flow-stage-num {
+            position:absolute; top:-10px; left:16px;
+            font-family:'Orbitron',sans-serif; font-size:0.65rem; font-weight:700;
+            padding:2px 10px; border-radius:10px; letter-spacing:1px;
+        }
+        .flow-stage h3 {
+            font-size:0.9rem; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+        }
+        .flow-stage p { font-size:0.78rem; color:var(--text-dim); line-height:1.5; }
+        .flow-stage ul { list-style:none; padding:0; }
+        .flow-stage li { font-size:0.78rem; color:var(--text-dim); padding:3px 0; padding-left:14px; position:relative; }
+        .flow-stage li::before { content:'›'; position:absolute; left:0; color:var(--orange); font-weight:700; }
+
+        .flow-arrow {
+            display:flex; align-items:center; justify-content:center;
+            font-size:1.5rem; color:var(--text-muted); flex-shrink:0; width:30px;
+        }
+        .flow-arrow-down {
+            text-align:center; font-size:1.5rem; color:var(--text-muted);
+            padding:4px 0;
+        }
+
+        /* ─── Strategy Cards ─── */
+        .strat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px,1fr)); gap:16px; }
+        .strat-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+            overflow:hidden; transition:all 0.2s;
+        }
+        .strat-card:hover { border-color:var(--border-hover); }
+        .strat-header {
+            padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+            border-bottom:1px solid var(--border);
+        }
+        .strat-name { font-family:'Orbitron',sans-serif; font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .strat-type {
+            font-family:var(--mono); font-size:0.65rem; padding:3px 10px;
+            border-radius:10px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;
+        }
+        .strat-body { padding:16px 20px; }
+        .strat-desc { font-size:0.82rem; color:var(--text-dim); line-height:1.5; margin-bottom:14px; }
+        .strat-details { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .strat-detail {
+            padding:8px 10px; background:rgba(255,255,255,0.02);
+            border-radius:6px; border:1px solid rgba(255,255,255,0.04);
+        }
+        .strat-detail-label { font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+        .strat-detail-value { font-family:var(--mono); font-size:0.78rem; margin-top:2px; }
+
+        .strat-edge {
+            margin-top:14px; padding:10px 12px; border-radius:6px;
+            border:1px dashed rgba(249,115,22,0.2); background:rgba(249,115,22,0.04);
+        }
+        .strat-edge-label { font-size:0.65rem; color:var(--orange); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; font-weight:600; }
+        .strat-edge-text { font-size:0.78rem; color:var(--text-dim); line-height:1.4; }
+
+        /* ─── Trades Board ─── */
+        .trades-table { width:100%; border-collapse:collapse; }
+        .trades-table th {
+            font-size:0.65rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);
+            padding:10px 14px; text-align:left; border-bottom:1px solid var(--border);
+            font-weight:600;
+        }
+        .trades-table td {
+            padding:14px; border-bottom:1px solid rgba(255,255,255,0.04);
+            font-size:0.85rem; vertical-align:top;
+        }
+        .trades-table tr:hover td { background:rgba(255,255,255,0.02); }
+        .trade-ticker { font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.9rem; }
+        .trade-dir { font-family:var(--mono); font-size:0.7rem; padding:3px 8px; border-radius:4px; font-weight:600; }
+        .dir-long { background:var(--green-dim); color:var(--green); }
+        .dir-short { background:var(--red-dim); color:var(--red); }
+        .dir-sell { background:var(--purple-dim); color:var(--purple); }
+        .dir-watch { background:rgba(255,255,255,0.05); color:var(--text-dim); }
+        .dir-killed { background:var(--red-dim); color:var(--red); text-decoration:line-through; }
+        .stars { color:var(--gold); letter-spacing:2px; }
+        .trade-status {
+            font-family:var(--mono); font-size:0.7rem; padding:3px 10px;
+            border-radius:10px; font-weight:600;
+        }
+        .status-exec { background:var(--green-dim); color:var(--green); }
+        .status-gtc { background:var(--blue-dim); color:var(--blue); }
+        .status-watch { background:var(--gold-dim); color:var(--gold); }
+        .status-killed { background:var(--red-dim); color:var(--red); }
+
+        /* ─── Indicators ─── */
+        .ind-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
+        .ind-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+            padding:18px; transition:all 0.2s;
+        }
+        .ind-card:hover { border-color:var(--border-hover); }
+        .ind-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .ind-name { font-weight:700; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
+        .ind-priority {
+            font-family:var(--mono); font-size:0.6rem; padding:2px 8px;
+            border-radius:10px; font-weight:700;
+        }
+        .pri-1 { background:var(--red-dim); color:var(--red); }
+        .pri-2 { background:var(--orange-dim); color:var(--orange); }
+        .pri-3 { background:var(--gold-dim); color:var(--gold); }
+        .pri-4 { background:var(--blue-dim); color:var(--blue); }
+        .pri-5 { background:rgba(255,255,255,0.05); color:var(--text-dim); }
+        .ind-product { font-family:var(--mono); font-size:0.7rem; color:var(--cyan); margin-bottom:8px; }
+        .ind-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.4; margin-bottom:10px; }
+        .ind-meta { display:flex; gap:8px; flex-wrap:wrap; }
+        .ind-meta-tag {
+            font-family:var(--mono); font-size:0.6rem; padding:3px 8px;
+            border-radius:4px; border:1px solid var(--border);
+        }
+
+        /* ─── Section Headers ─── */
+        .section-header {
+            font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700;
+            letter-spacing:2px; margin-bottom:16px; padding-bottom:10px;
+            border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;
+        }
+        .section-header .count {
+            font-family:var(--mono); font-size:0.7rem; color:var(--text-muted);
+            background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;
+        }
+
+        /* ─── Motto ─── */
+        .motto {
+            text-align:center; padding:32px 20px; margin-top:24px;
+            border-top:1px solid var(--border);
+        }
+        .motto q {
+            font-family:'Orbitron',sans-serif; font-size:1.1rem; font-weight:500;
+            color:var(--orange); letter-spacing:2px;
+            text-shadow:0 0 20px rgba(249,115,22,0.3);
+        }
+        .motto .attr { font-size:0.75rem; color:var(--text-muted); margin-top:8px; }
+
+        /* ─── Responsive ─── */
+        @media (max-width:900px) {
+            .flow-row { flex-direction:column; }
+            .flow-arrow { transform:rotate(90deg); width:auto; height:30px; }
+            .strat-grid { grid-template-columns:1fr; }
+            .trades-table { font-size:0.75rem; }
+            .trades-table th, .trades-table td { padding:8px; }
+        }
+
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+        /* Earnings Calendar */
+        .earn-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+        .earn-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; min-height:100px; }
+        .earn-today { border-color:rgba(249,115,22,0.35); background:rgba(249,115,22,0.04); }
+        .earn-day-hdr { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.04); }
+        .earn-day-name { font-size:0.7rem; font-weight:600; color:var(--text); }
+        .earn-day-date { font-size:0.6rem; color:var(--text-muted); }
+        .earn-badge { font-size:0.55rem; background:rgba(249,115,22,0.2); color:var(--orange); padding:1px 6px; border-radius:8px; font-weight:600; }
+        .earn-count { margin-left:auto; font-size:0.6rem; color:var(--text-muted); background:rgba(255,255,255,0.05); padding:1px 6px; border-radius:8px; }
+        .earn-list { display:flex; flex-direction:column; gap:4px; }
+        .earn-row { display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.02); }
+        .earn-row:last-child { border:none; }
+        .earn-logo { width:18px; height:18px; border-radius:4px; flex-shrink:0; background:rgba(255,255,255,0.05); }
+        .earn-logo-fb { width:18px; height:18px; border-radius:4px; background:rgba(249,115,22,0.12); color:var(--orange); font-size:0.55rem; font-weight:700; align-items:center; justify-content:center; flex-shrink:0; }
+        .earn-info { flex:1; min-width:0; }
+        .earn-sym { font-size:0.7rem; font-weight:600; color:var(--text); font-family:var(--mono); }
+        .earn-name { font-size:0.55rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .earn-meta { display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; }
+        @media (max-width:1200px) { .earn-grid { grid-template-columns:repeat(4,1fr); } }
+        @media (max-width:900px) { .earn-grid { grid-template-columns:repeat(2,1fr); } }
+    </style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ─── DATA ───
+const team = [
+    {
+        id:'nabu', emoji:'🧮', name:'Nabu', role:'CIO & Head Quant',
+        status:'online',
+        desc:'Named after the Mesopotamian god of wisdom. Leads all trading strategy, risk management, and bot architecture decisions. Supervises Mark, Henry, and Athena. Runs the weekly War Room.',
+        model:'Flash 2.5 / Opus (analysis)', channels:['Discord','Tradyom Slack'],
+        crons:['Weekly Training (Mon 8AM)','Daily GM Discord (8AM)','European Drop Scanner (3PM)','Dragons Room (Fri 8AM)']
+    },
+    {
+        id:'mark', emoji:'📊', name:'Mark', role:'Quant & Technical Analyst',
+        status:'scheduled',
+        desc:'Builds quantitative models, runs technical analysis across all tracked tickers. Designed bot architectures for Themis, Apollo, and Charon. Killed his own RKLB pick — shows real integrity.',
+        model:'Sonnet / Flash 2.5', channels:['Cron Daily 7AM'],
+        crons:['Daily TA Brief (7AM)','XAUUSD Level Monitor (4h)','Monthly Trend Recap (1st)']
+    },
+    {
+        id:'henry', emoji:'📰', name:'Henry', role:'Financial & Fundamental Analyst',
+        status:'scheduled',
+        desc:'SEC filings expert, macro research, earnings analysis. Discovered the permanent margin expansion insight from tariff rate differentials. Designed the Midas bot architecture. His VERX thesis was the intellectual highlight of the War Room.',
+        model:'Sonnet / Flash 2.5', channels:['Cron Daily 7AM'],
+        crons:['Daily FA Brief (7AM)']
+    },
+    {
+        id:'athena', emoji:'🦉', name:'Athena', role:'Business Analyst',
+        status:'online',
+        desc:'Portfolio strategy, business analysis, and due diligence across Orora Capital investments. Supporting CarrotFunding $10M raise. Delivers market research and competitive intelligence on demand.',
+        model:'Flash 2.5', channels:['Tradyom Slack','On-demand'],
+        crons:[]
+    },
+];
+
+const strategies = [
+    {
+        name:'Themis', greek:'Goddess of Law & Order', type:'Arbitrage',
+        typeColor:{ bg:'rgba(124,92,252,0.1)', color:'var(--accent)', border:'rgba(124,92,252,0.2)' },
+        desc:'Tariff Shock Arbitrage Engine. Trades equity spread between tariff-sensitive and tariff-insensitive baskets around policy announcements and legal rulings.',
+        edge:'Proprietary "Tariff Confusion Index" — systematizes legal chaos into a tradeable signal. No other quant shop has this.',
+        details: [
+            { label:'Dev Timeline', value:'8-12 weeks' },
+            { label:'Data Cost', value:'$5,000/mo' },
+            { label:'Max Exposure', value:'15% portfolio' },
+            { label:'Time Horizon', value:'4-hour holds' },
+            { label:'Key Input', value:'NLP + Court filings' },
+            { label:'Edge Duration', value:'12-18 months' },
+        ]
+    },
+    {
+        name:'Midas', greek:'The Golden Touch', type:'Alpha',
+        typeColor:{ bg:'var(--gold-dim)', color:'var(--gold)', border:'rgba(245,158,11,0.2)' },
+        desc:'Refund Alpha Engine. Identifies and front-runs companies most likely to receive tariff refunds, before the market prices in the earnings impact. Henry\'s margin expansion insight is the crown jewel.',
+        edge:'Nobody has a systematic refund-estimation model. The margin expansion angle (permanent cost-basis improvement) is a full earnings cycle ahead of the market.',
+        details: [
+            { label:'Dev Timeline', value:'10-14 weeks' },
+            { label:'Data Cost', value:'$3,000/mo' },
+            { label:'Max Exposure', value:'20% portfolio' },
+            { label:'Holding Period', value:'~6 months' },
+            { label:'Key Input', value:'SEC + PACER + NLP' },
+            { label:'Edge Duration', value:'6-12 months' },
+        ]
+    },
+    {
+        name:'Apollo', greek:'God of the Sun', type:'Momentum',
+        typeColor:{ bg:'var(--orange-dim)', color:'var(--orange)', border:'rgba(249,115,22,0.2)' },
+        desc:'Gold Momentum Regime Engine. Dynamic position sizing in XAU/USD based on Hidden Markov Model regime detection with macro overlay, silver confirmation, and geopolitical override.',
+        edge:'Multi-regime adaptability. Most gold bots are single-regime. Apollo adapts automatically. Geopolitical override gives edge during crisis periods that break normal statistical relationships.',
+        details: [
+            { label:'Dev Timeline', value:'6-8 weeks' },
+            { label:'Data Cost', value:'$2,000/mo' },
+            { label:'Max Drawdown', value:'5% halt' },
+            { label:'Leverage Cap', value:'3x' },
+            { label:'Regime States', value:'3 (HMM)' },
+            { label:'Current State', value:'TRENDING 78%' },
+        ]
+    },
+    {
+        name:'Charon', greek:'Ferryman of the Dead', type:'Liquidation',
+        typeColor:{ bg:'var(--red-dim)', color:'var(--red)', border:'rgba(239,68,68,0.2)' },
+        desc:'Delisting Liquidation Arbitrage Engine. Systematically shorts Nasdaq-listed companies entering delisting proceedings, exploiting forced selling by passive funds.',
+        edge:'Predictable forced selling. 7-day lead time from Nasdaq determination to public notice is the alpha window. ~340 companies in the universe, ~90 trending toward breach.',
+        details: [
+            { label:'Dev Timeline', value:'12-16 weeks' },
+            { label:'Data Cost', value:'$1,500/mo' },
+            { label:'Max Exposure', value:'8% portfolio' },
+            { label:'Max Per Name', value:'1%' },
+            { label:'Key Input', value:'EDGAR + 13F' },
+            { label:'Universe', value:'~340 micro-caps' },
+        ]
+    },
+];
+
+const trades = [
+    { ticker:'XAU/USD', name:'Gold', dir:'LONG', dirClass:'dir-long', stars:5, entry:'$5,000 (scale)', stop:'$4,840', target:'$5,225 → $5,400', catalyst:'SCOTUS chaos + central bank buying + real yield compression', timeline:'2-6 weeks', status:'EXECUTE', statusClass:'status-exec', agent:'Mark' },
+    { ticker:'VERX', name:'Vertex Inc', dir:'LONG', dirClass:'dir-long', stars:5, entry:'~$13', stop:'$10.50', target:'$18 → $25 (Baird $119)', catalyst:'Tariff complexity = tax compliance demand. Earnings Feb 26', timeline:'1-3 months', status:'EXECUTE', statusClass:'status-exec', agent:'Henry' },
+    { ticker:'BMBL', name:'Bumble', dir:'SELL PUTS', dirClass:'dir-sell', stars:4, entry:'Mar $3 puts × 167', stop:'Assignment at $2.58', target:'$7,014 premium (12.3%)', catalyst:'Earnings Feb 27, squeeze 82/100, takeover optionality', timeline:'3 weeks', status:'EXECUTE', statusClass:'status-exec', agent:'Mark' },
+    { ticker:'BTC', name:'Bitcoin', dir:'LONG LADDER', dirClass:'dir-long', stars:4, entry:'$65K / $62K / $58K', stop:'$54,500', target:'$75K → $85K → $100K', catalyst:'200-week MA approach + cycle dynamics', timeline:'3-12 months', status:'GTC SET', statusClass:'status-gtc', agent:'Mark' },
+    { ticker:'FIVE', name:'Five Below', dir:'WATCH', dirClass:'dir-watch', stars:3, entry:'—', stop:'—', target:'—', catalyst:'#1 tariff refund beneficiary. Earnings Mar 19', timeline:'1-2 months', status:'WATCHLIST', statusClass:'status-watch', agent:'Henry' },
+    { ticker:'HOOD', name:'Robinhood', dir:'WATCH', dirClass:'dir-watch', stars:3, entry:'—', stop:'—', target:'—', catalyst:'RVI IPO flywheel', timeline:'1-3 months', status:'WATCHLIST', statusClass:'status-watch', agent:'Henry' },
+    { ticker:'RKLB', name:'Rocket Lab', dir:'KILLED', dirClass:'dir-killed', stars:0, entry:'—', stop:'—', target:'—', catalyst:'Neutron delayed to late 2026. Tank rupture. Price at $83.', timeline:'—', status:'KILLED', statusClass:'status-killed', agent:'Mark' },
+    { ticker:'SNAP', name:'Snap Inc', dir:'KILLED', dirClass:'dir-killed', stars:0, entry:'—', stop:'—', target:'—', catalyst:'No thesis', timeline:'—', status:'KILLED', statusClass:'status-killed', agent:'—' },
+    { ticker:'ETH', name:'Ethereum', dir:'KILLED', dirClass:'dir-killed', stars:0, entry:'—', stop:'—', target:'—', catalyst:'ETH/BTC ratio freefall. Below $1,800 opens $1,500.', timeline:'—', status:'KILLED', statusClass:'status-killed', agent:'—' },
+];
+
+const indicators = [
+    { name:'Viper Alert', emoji:'🔥', product:'Squeeze Detector', priority:1, defensibility:'6/10', ship:'Feb 27', desc:'Real-time squeeze probability score (0-100). Combines short interest, days to cover, gamma exposure, BB squeeze. Flagged BMBL at 82/100.', tags:['PineScript','Free Tier','Ship ASAP'] },
+    { name:'Oracle Eye', emoji:'📋', product:'Filing Pulse', priority:2, defensibility:'8/10', ship:'~4 months', desc:'AI-powered SEC filing sentiment. Parses 8-K, 10-Q, 10-K in real-time. 12,000+ labeled filings needed. Highest moat in portfolio.', tags:['NLP','Pro Tier','Training Data'] },
+    { name:'Weather Map', emoji:'🎯', product:'Regime Radar', priority:3, defensibility:'7/10', ship:'~6 weeks', desc:'Real-time market regime classifier: TRENDING / RANGING / BREAKOUT with confidence %. HMM trained on 10 years intraday.', tags:['HMM','Free Tier','Ichimoku'] },
+    { name:'Shockwave Index', emoji:'🌐', product:'Policy Beta Score', priority:4, defensibility:'5/10', ship:'~4 weeks', desc:'Per-stock policy sensitivity score (-10 to +10). High-sensitivity stocks underperformed by 12.4% on tariff-negative days.', tags:['NLP','Pro Tier','Move Fast'] },
+    { name:'Whale Sonar', emoji:'💧', product:'Smart Flow', priority:5, defensibility:'6/10', ship:'~8 weeks', desc:'Classifies order flow as institutional, retail, or algorithmic. Institutional buying spikes preceded +1.8% mean 3-day returns.', tags:['Pro Tier','Nice-to-have'] },
+];
+
+const trackedTickers = ['$AMZN','$AAPL','$META','$HOOD','$IBKR','$BUMBL','$SNAP','$XAU','$XAG','$BTC','$ETH'];
+
+// ─── STATE ───
+let activeTab = 'overview';
+
+// ─── RENDER ───
+function render() {
+    document.getElementById('app').innerHTML = `
+        <div class="header">
+            <div class="header-left">
+                <h1>ORORA CAPITAL</h1>
+                <div class="subtitle">AI-Powered Trading Desk & Investment Firm</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px">
+                <a href="agent-office.html" class="back-link">← Command Center</a>
+                <div class="clock" id="clock"></div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            ${['overview','strategies','trades','indicators','dataflow','earnings'].map(t =>
+                `<button class="tab ${activeTab===t?'active':''}" data-tab="${t}">${
+                    {overview:'🏢 Overview',strategies:'⚔️ Bot Strategies',trades:'📈 Trade Board',indicators:'🔬 AI Indicators',dataflow:'🔄 Data Flow',earnings:'📅 Earnings'}[t]
+                }</button>`
+            ).join('')}
+        </div>
+
+        <div class="panel ${activeTab==='overview'?'active':''}">${renderOverview()}</div>
+        <div class="panel ${activeTab==='strategies'?'active':''}">${renderStrategies()}</div>
+        <div class="panel ${activeTab==='trades'?'active':''}">${renderTrades()}</div>
+        <div class="panel ${activeTab==='indicators'?'active':''}">${renderIndicators()}</div>
+        <div class="panel ${activeTab==='dataflow'?'active':''}">${renderDataFlow()}</div>
+        <div class="panel ${activeTab==='earnings'?'active':''}">${renderEarningsTab()}</div>
+
+        <div class="motto">
+            <q>WE DON'T DO FOMO. WE DO MATH.</q>
+            <div class="attr">— Nabu, CIO · War Room, Feb 21 2026</div>
+        </div>
+    `;
+
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        activeTab = t.dataset.tab; render();
+    }));
+    startClock();
+}
+
+function renderOverview() {
+    return `
+        <div class="section-header" style="color:var(--orange)">THE TEAM <span class="count">${team.length} agents</span></div>
+        <div class="team-grid">
+            ${team.map(t => `
+                <div class="team-card">
+                    <div class="team-card-header">
+                        <div class="team-emoji">${t.emoji}<div class="dot ${t.status==='online'?'dot-online':'dot-scheduled'}"></div></div>
+                        <div>
+                            <div class="team-name">${t.name}</div>
+                            <div class="team-role">${t.role}</div>
+                        </div>
+                    </div>
+                    <div class="team-desc">${t.desc}</div>
+                    <div class="team-tags">
+                        <span class="ttag ttag-model">${t.model}</span>
+                        ${t.channels.map(c => `<span class="ttag ttag-channel">${c}</span>`).join('')}
+                        ${t.crons.map(c => `<span class="ttag ttag-cron">${c}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="section-header" style="color:var(--cyan)">TRACKED UNIVERSE</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px">
+            ${trackedTickers.map(t => `
+                <span style="font-family:var(--mono);font-size:0.85rem;padding:8px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);color:var(--cyan)">${t}</span>
+            `).join('')}
+        </div>
+
+        <div class="section-header" style="color:var(--gold)">AT A GLANCE</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+            ${[
+                { v:'4', l:'Bot Architectures', c:'var(--accent)' },
+                { v:'5', l:'AI Indicators', c:'var(--cyan)' },
+                { v:'4', l:'Active Trades', c:'var(--green)' },
+                { v:'2', l:'Watchlist', c:'var(--gold)' },
+                { v:'3', l:'Killed', c:'var(--red)' },
+                { v:'$11.5K', l:'Monthly Data Cost', c:'var(--orange)' },
+                { v:'11', l:'Tracked Tickers', c:'var(--blue)' },
+                { v:'7', l:'Active Cron Jobs', c:'var(--purple)' },
+            ].map(s => `
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center">
+                    <div style="font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:700;color:${s.c}">${s.v}</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px">${s.l}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderStrategies() {
+    return `
+        <div class="section-header" style="color:var(--accent)">BOT ARCHITECTURES <span class="count">${strategies.length} bots</span></div>
+        <div class="strat-grid">
+            ${strategies.map(s => `
+                <div class="strat-card">
+                    <div class="strat-header">
+                        <div class="strat-name">⚙️ ${s.name}</div>
+                        <span class="strat-type" style="background:${s.typeColor.bg};color:${s.typeColor.color};border:1px solid ${s.typeColor.border}">${s.type}</span>
+                    </div>
+                    <div class="strat-body">
+                        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">${s.greek}</div>
+                        <div class="strat-desc">${s.desc}</div>
+                        <div class="strat-details">
+                            ${s.details.map(d => `
+                                <div class="strat-detail">
+                                    <div class="strat-detail-label">${d.label}</div>
+                                    <div class="strat-detail-value">${d.value}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="strat-edge">
+                            <div class="strat-edge-label">🔒 Competitive Edge</div>
+                            <div class="strat-edge-text">${s.edge}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div style="margin-top:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.8rem;color:var(--orange);margin-bottom:8px">DEVELOPMENT ROADMAP</div>
+            <div style="font-size:0.82rem;color:var(--text-dim);line-height:1.6">
+                <strong style="color:var(--text)">Phase 1 (Now → 8 weeks):</strong> Apollo (Gold Regime) — simplest architecture, fastest to market, hottest asset<br>
+                <strong style="color:var(--text)">Phase 2 (8 → 14 weeks):</strong> Themis (Tariff Shock) — while tariff chaos persists, time-limited edge<br>
+                <strong style="color:var(--text)">Phase 3 (Q2 2026):</strong> Midas (Refund Alpha) + Charon (Delisting Arb) — data-intensive builds<br>
+                <strong style="color:var(--text)">Total Est. Cost:</strong> 4 engineers × 16 weeks ≈ $200K &nbsp;|&nbsp; <strong>Monthly Data:</strong> $11,500
+            </div>
+        </div>
+    `;
+}
+
+function renderTrades() {
+    const active = trades.filter(t => !['KILLED','WATCH'].includes(t.dir) && t.dir !== 'KILLED');
+    return `
+        <div class="section-header" style="color:var(--green)">TRADE BOARD <span class="count">${trades.length} positions</span></div>
+        <div style="overflow-x:auto">
+            <table class="trades-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Direction</th>
+                        <th>Conviction</th>
+                        <th>Entry</th>
+                        <th>Stop</th>
+                        <th>Target</th>
+                        <th>Catalyst</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${trades.map(t => `
+                        <tr>
+                            <td><span class="trade-ticker">${t.ticker}</span><br><span style="font-size:0.7rem;color:var(--text-muted)">${t.name}</span></td>
+                            <td><span class="trade-dir ${t.dirClass}">${t.dir}</span></td>
+                            <td><span class="stars">${t.stars > 0 ? '★'.repeat(t.stars) + '☆'.repeat(5-t.stars) : '—'}</span></td>
+                            <td style="font-family:var(--mono);font-size:0.78rem">${t.entry}</td>
+                            <td style="font-family:var(--mono);font-size:0.78rem;color:var(--red)">${t.stop}</td>
+                            <td style="font-family:var(--mono);font-size:0.78rem;color:var(--green)">${t.target}</td>
+                            <td style="font-size:0.75rem;color:var(--text-dim);max-width:200px">${t.catalyst}</td>
+                            <td style="font-size:0.78rem">${t.agent}</td>
+                            <td><span class="trade-status ${t.statusClass}">${t.status}</span></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderIndicators() {
+    return `
+        <div class="section-header" style="color:var(--cyan)">TRADICATORS AI INDICATORS <span class="count">${indicators.length} indicators</span></div>
+        <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:20px;line-height:1.5">
+            Pricing: <strong style="color:var(--green)">Free Tier</strong> = Viper Alert + Weather Map (acquisition) &nbsp;|&nbsp;
+            <strong style="color:var(--gold)">Pro Tier</strong> = Oracle Eye + Shockwave Index + Whale Sonar ($49-99/mo)
+        </div>
+        <div class="ind-grid">
+            ${indicators.map(ind => `
+                <div class="ind-card">
+                    <div class="ind-header">
+                        <div class="ind-name">${ind.emoji} ${ind.name}</div>
+                        <span class="ind-priority pri-${ind.priority}">#${ind.priority}</span>
+                    </div>
+                    <div class="ind-product">${ind.product}</div>
+                    <div class="ind-desc">${ind.desc}</div>
+                    <div class="ind-meta">
+                        <span class="ind-meta-tag" style="color:var(--orange)">Def: ${ind.defensibility}</span>
+                        <span class="ind-meta-tag" style="color:var(--cyan)">Ship: ${ind.ship}</span>
+                        ${ind.tags.map(t => `<span class="ind-meta-tag">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderDataFlow() {
+    return `
+        <div class="section-header" style="color:var(--orange)">DATA FLOW → DECISION PIPELINE</div>
+        <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:24px;line-height:1.5">
+            How raw market data flows through the Orora Capital AI team and transforms into executable trading decisions.
+        </p>
+
+        <!-- Stage 1: Data Collection -->
+        <div class="flow-row">
+            <div class="flow-stage" style="flex:1">
+                <span class="flow-stage-num" style="background:var(--blue-dim);color:var(--blue)">STAGE 1</span>
+                <h3 style="color:var(--blue)">📡 Data Collection <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400">Daily 7:00 AM Dubai</span></h3>
+                <ul>
+                    <li><strong>Mark (TA):</strong> Price action, S/R levels, RSI, MACD, Ichimoku [9,26,52,26], Fibonacci Retracement across 11 tickers</li>
+                    <li><strong>Henry (FA):</strong> SEC filings (10-K, 10-Q, 8-K), earnings, press releases, macro news (Fed, regulatory, geopolitical)</li>
+                    <li><strong>Athena:</strong> Portfolio company due diligence, competitive intelligence, business metrics</li>
+                    <li>Output: 3 paragraphs / 200 words max per report — signal only, no noise</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="flow-arrow-down">⬇</div>
+
+        <!-- Stage 2: Intelligence Synthesis -->
+        <div class="flow-row">
+            <div class="flow-stage" style="flex:1">
+                <span class="flow-stage-num" style="background:var(--purple-dim);color:var(--purple)">STAGE 2</span>
+                <h3 style="color:var(--purple)">🧠 Intelligence Synthesis <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400">Nabu processes</span></h3>
+                <ul>
+                    <li>Mark TA + Henry FA reports feed directly into <strong>Nabu</strong> via sessions_send</li>
+                    <li>Nabu cross-references: technicals × fundamentals × macro regime</li>
+                    <li>Conflict resolution: when TA and FA disagree, Nabu weighs conviction + catalyst proximity</li>
+                    <li>Dragons Room community signals integrated (82 users, sentiment + instrument tracking)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="flow-arrow-down">⬇</div>
+
+        <!-- Stage 3: Strategy Execution -->
+        <div class="flow-row">
+            <div class="flow-stage" style="flex:2">
+                <span class="flow-stage-num" style="background:var(--orange-dim);color:var(--orange)">STAGE 3</span>
+                <h3 style="color:var(--orange)">⚔️ Strategy & Decision <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400">Nabu decides</span></h3>
+                <ul>
+                    <li><strong>Trade Signals:</strong> Nabu generates buy/sell/hold signals with conviction scores (1-5 stars)</li>
+                    <li><strong>Bot Routing:</strong> Signals mapped to bot architectures — Themis (tariff), Midas (refund), Apollo (gold), Charon (delisting)</li>
+                    <li><strong>Risk Check:</strong> Position sizing via half-Kelly, correlation limits, max exposure caps</li>
+                    <li><strong>European Scanner:</strong> Mid-session (3PM Dubai) — top 5 drops + bounce/put play recommendations</li>
+                </ul>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-stage" style="flex:1">
+                <span class="flow-stage-num" style="background:var(--red-dim);color:var(--red)">RISK GATE</span>
+                <h3 style="color:var(--red)">🛡️ Risk Management</h3>
+                <ul>
+                    <li>Max portfolio exposure per strategy</li>
+                    <li>Max single-name concentration</li>
+                    <li>Drawdown halt triggers</li>
+                    <li>Regime confidence minimums</li>
+                    <li>Correlation monitoring</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="flow-arrow-down">⬇</div>
+
+        <!-- Stage 4: Output & Distribution -->
+        <div class="flow-row">
+            <div class="flow-stage" style="flex:1">
+                <span class="flow-stage-num" style="background:var(--green-dim);color:var(--green)">STAGE 4</span>
+                <h3 style="color:var(--green)">📢 Output & Distribution</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--cyan);font-weight:600;margin-bottom:4px">INTERNAL</div>
+                        <ul>
+                            <li>Nabu posts to Discord (Dragons Room)</li>
+                            <li>Reports to Tradyom Slack</li>
+                            <li>Friday AI Digest (weekly summary)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem;color:var(--gold);font-weight:600;margin-bottom:4px">RAMI (CEO)</div>
+                        <ul>
+                            <li>War Room summaries (Saturday)</li>
+                            <li>High-conviction trade alerts</li>
+                            <li>Weekly portfolio performance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-arrow-down">⬇</div>
+
+        <!-- Stage 5: Feedback Loop -->
+        <div class="flow-row">
+            <div class="flow-stage" style="flex:1;border-color:rgba(249,115,22,0.2)">
+                <span class="flow-stage-num" style="background:var(--gold-dim);color:var(--gold)">FEEDBACK</span>
+                <h3 style="color:var(--gold)">🔄 Learning & Adaptation</h3>
+                <ul>
+                    <li><strong>Weekly Training (Mon 8AM):</strong> Nabu studies new strategies — rotating: chart patterns, options, macro, crypto/DeFi</li>
+                    <li><strong>Monthly Trend Recap (1st):</strong> Mark compiles emerging TA methods, AI/ML developments, paradigm shifts</li>
+                    <li><strong>War Room (Saturdays):</strong> 3-meeting format — Kickoff → Pressure Cooker → Verdict. Trades locked, positions killed, bots iterated</li>
+                    <li><strong>Post-trade analysis:</strong> What worked, what didn't, model calibration updates</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Cron Schedule -->
+        <div style="margin-top:32px">
+            <div class="section-header" style="color:var(--cyan)">AUTOMATED SCHEDULE</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+                ${[
+                    { time:'5:00 AM', job:'Helen — Velved Update', freq:'Daily', color:'var(--purple)' },
+                    { time:'7:00 AM', job:'Mark — TA Brief (200w)', freq:'Mon-Fri', color:'var(--blue)' },
+                    { time:'7:00 AM', job:'Henry — FA Brief (200w)', freq:'Mon-Fri', color:'var(--blue)' },
+                    { time:'8:00 AM', job:'Nabu — Discord GM', freq:'Daily', color:'var(--green)' },
+                    { time:'8:00 AM', job:'Nabu — Weekly Training', freq:'Monday', color:'var(--accent)' },
+                    { time:'8:00 AM', job:'William — Regulatory Scan', freq:'Friday', color:'var(--gold)' },
+                    { time:'8:00 AM', job:'Dragons Room Collector', freq:'Friday', color:'var(--orange)' },
+                    { time:'9:00 AM', job:'Friday AI Digest', freq:'Friday', color:'var(--cyan)' },
+                    { time:'10:30 AM', job:'Tradyom Standup', freq:'Daily', color:'var(--green)' },
+                    { time:'3:00 PM', job:'European Drop Scanner', freq:'Mon-Fri', color:'var(--red)' },
+                    { time:'Every 4h', job:'XAUUSD Level Monitor', freq:'Mon-Fri', color:'var(--gold)' },
+                    { time:'1st of Mo', job:'Monthly TA Recap', freq:'Monthly', color:'var(--purple)' },
+                ].map(s => `
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;gap:10px">
+                        <div style="font-family:var(--mono);font-size:0.7rem;color:${s.color};min-width:65px">${s.time}</div>
+                        <div>
+                            <div style="font-size:0.78rem;font-weight:600">${s.job}</div>
+                            <div style="font-size:0.65rem;color:var(--text-muted)">${s.freq}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+// ─── CLOCK ───
+function startClock() {
+    function update() {
+        const el = document.getElementById('clock');
+        if (el) {
+            el.textContent = new Date().toLocaleString('en-US', {
+                timeZone:'Asia/Dubai', weekday:'short', month:'short', day:'numeric',
+                hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+            }) + ' GST';
+        }
+    }
+    update(); setInterval(update, 1000);
+}
+
+// ─── EARNINGS ───
+// EARNINGS_DATA_START (auto-updated by cron)
+const earningsData = {"lastUpdated":"2026-02-25T15:36:00Z","days":{"2026-02-22":[],"2026-02-23":[{"symbol":"OKE","name":"ONEOK Inc.","time":"AMC","epsEst":1.50,"epsActual":null,"surprise":null,"mcap":"62B"},{"symbol":"FANG","name":"Diamondback Energy","time":"AMC","epsEst":1.88,"epsActual":null,"surprise":null,"mcap":"55B"},{"symbol":"KEYS","name":"Keysight Technologies","time":"AMC","epsEst":1.73,"epsActual":null,"surprise":null,"mcap":"36B"},{"symbol":"BWXT","name":"BWX Technologies","time":"AMC","epsEst":1.02,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"OVV","name":"Ovintiv Inc.","time":"AMC","epsEst":1.15,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"ERIE","name":"Erie Indemnity","time":"AMC","epsEst":2.85,"epsActual":null,"surprise":null,"mcap":"15B"},{"symbol":"BMRN","name":"BioMarin Pharma","time":"AMC","epsEst":0.75,"epsActual":null,"surprise":null,"mcap":"13B"},{"symbol":"ALSN","name":"Allison Transmission","time":"AMC","epsEst":2.10,"epsActual":null,"surprise":null,"mcap":"10B"}],"2026-02-24":[{"symbol":"HD","name":"Home Depot","time":"BMO","epsEst":2.52,"epsActual":3.02,"surprise":19.84,"mcap":"380B"},{"symbol":"AMT","name":"American Tower","time":"BMO","epsEst":2.47,"epsActual":null,"surprise":null,"mcap":"92B"},{"symbol":"KDP","name":"Keurig Dr Pepper","time":"BMO","epsEst":0.57,"epsActual":null,"surprise":null,"mcap":"47B"},{"symbol":"NRG","name":"NRG Energy","time":"BMO","epsEst":1.35,"epsActual":null,"surprise":null,"mcap":"20B"},{"symbol":"FIS","name":"Fidelity National Info","time":"BMO","epsEst":1.28,"epsActual":null,"surprise":null,"mcap":"45B"},{"symbol":"MELI","name":"MercadoLibre","time":"AMC","epsEst":11.77,"epsActual":null,"surprise":null,"mcap":"110B"},{"symbol":"EOG","name":"EOG Resources","time":"AMC","epsEst":2.20,"epsActual":null,"surprise":null,"mcap":"72B"},{"symbol":"AXON","name":"Axon Enterprise","time":"AMC","epsEst":1.48,"epsActual":null,"surprise":null,"mcap":"50B"},{"symbol":"WDAY","name":"Workday","time":"AMC","epsEst":1.78,"epsActual":null,"surprise":null,"mcap":"70B"},{"symbol":"FSLR","name":"First Solar","time":"AMC","epsEst":3.15,"epsActual":null,"surprise":null,"mcap":"22B"}],"2026-02-25":[{"symbol":"NVDA","name":"NVIDIA Corporation","time":"AMC","epsEst":1.54,"epsActual":null,"surprise":null,"mcap":"4.77T"},{"symbol":"CRM","name":"Salesforce","time":"AMC","epsEst":3.05,"epsActual":null,"surprise":null,"mcap":"180B"},{"symbol":"SNPS","name":"Synopsys","time":"AMC","epsEst":3.56,"epsActual":null,"surprise":null,"mcap":"86B"},{"symbol":"SNOW","name":"Snowflake","time":"AMC","epsEst":0.27,"epsActual":null,"surprise":null,"mcap":"57B"},{"symbol":"HEI","name":"HEICO Corporation","time":"AMC","epsEst":1.29,"epsActual":null,"surprise":null,"mcap":"48B"},{"symbol":"A","name":"Agilent Technologies","time":"AMC","epsEst":1.37,"epsActual":null,"surprise":null,"mcap":"35B"},{"symbol":"ZM","name":"Zoom Communications","time":"AMC","epsEst":1.46,"epsActual":null,"surprise":null,"mcap":"26B"},{"symbol":"PSTG","name":"Pure Storage","time":"AMC","epsEst":0.64,"epsActual":null,"surprise":null,"mcap":"24B"},{"symbol":"TTD","name":"The Trade Desk","time":"AMC","epsEst":0.58,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"FTAI","name":"FTAI Aviation","time":"AMC","epsEst":1.18,"epsActual":null,"surprise":null,"mcap":"31B"}],"2026-02-26":[{"symbol":"LOW","name":"Lowe's Companies","time":"BMO","epsEst":1.84,"epsActual":null,"surprise":null,"mcap":"145B"},{"symbol":"TJX","name":"TJX Companies","time":"BMO","epsEst":1.15,"epsActual":null,"surprise":null,"mcap":"135B"},{"symbol":"BKNG","name":"Booking Holdings","time":"AMC","epsEst":38.50,"epsActual":null,"surprise":null,"mcap":"180B"},{"symbol":"DELL","name":"Dell Technologies","time":"AMC","epsEst":2.55,"epsActual":null,"surprise":null,"mcap":"85B"},{"symbol":"MRVL","name":"Marvell Technology","time":"AMC","epsEst":0.59,"epsActual":null,"surprise":null,"mcap":"78B"},{"symbol":"ABNB","name":"Airbnb","time":"AMC","epsEst":0.75,"epsActual":null,"surprise":null,"mcap":"85B"},{"symbol":"EBAY","name":"eBay","time":"AMC","epsEst":1.22,"epsActual":null,"surprise":null,"mcap":"35B"},{"symbol":"HPE","name":"Hewlett Packard Ent.","time":"AMC","epsEst":0.55,"epsActual":null,"surprise":null,"mcap":"28B"},{"symbol":"NTNX","name":"Nutanix","time":"AMC","epsEst":0.45,"epsActual":null,"surprise":null,"mcap":"20B"},{"symbol":"OKTA","name":"Okta","time":"AMC","epsEst":0.72,"epsActual":null,"surprise":null,"mcap":"18B"}],"2026-02-27":[{"symbol":"AIG","name":"American Intl Group","time":"BMO","epsEst":1.80,"epsActual":null,"surprise":null,"mcap":"50B"},{"symbol":"WMG","name":"Warner Music Group","time":"BMO","epsEst":0.42,"epsActual":null,"surprise":null,"mcap":"18B"},{"symbol":"BA","name":"Boeing","time":"BMO","epsEst":-1.75,"epsActual":null,"surprise":null,"mcap":"130B"},{"symbol":"NTR","name":"Nutrien","time":"BMO","epsEst":0.65,"epsActual":null,"surprise":null,"mcap":"25B"},{"symbol":"FND","name":"Floor & Decor","time":"BMO","epsEst":0.48,"epsActual":null,"surprise":null,"mcap":"12B"},{"symbol":"DKNG","name":"DraftKings","time":"BMO","epsEst":0.32,"epsActual":null,"surprise":null,"mcap":"22B"}],"2026-02-28":[]}};
+// EARNINGS_DATA_END
+
+function getLogoUrl(symbol) {
+    return `https://logo.clearbit.com/${({
+        'NVDA':'nvidia.com','CRM':'salesforce.com','SNPS':'synopsys.com','SNOW':'snowflake.com',
+        'HEI':'heico.com','A':'agilent.com','ZM':'zoom.us','PSTG':'purestorage.com',
+        'TTD':'thetradedesk.com','FTAI':'ftaiaviation.com','HD':'homedepot.com','AMT':'americantower.com',
+        'KDP':'keurigdrpepper.com','NRG':'nrg.com','FIS':'fisglobal.com','MELI':'mercadolibre.com',
+        'EOG':'eogresources.com','AXON':'axon.com','WDAY':'workday.com','FSLR':'firstsolar.com',
+        'OKE':'oneok.com','FANG':'diamondbackenergy.com','KEYS':'keysight.com','BWXT':'bwxt.com',
+        'OVV':'ovintiv.com','ERIE':'erieinsurance.com','BMRN':'biomarin.com','ALSN':'allisontransmission.com',
+        'LOW':'lowes.com','TJX':'tjx.com','BKNG':'booking.com','DELL':'dell.com',
+        'MRVL':'marvell.com','ABNB':'airbnb.com','EBAY':'ebay.com','HPE':'hpe.com',
+        'NTNX':'nutanix.com','OKTA':'okta.com','AIG':'aig.com','WMG':'wmg.com',
+        'BA':'boeing.com','NTR':'nutrien.com','FND':'flooranddecor.com','DKNG':'draftkings.com',
+    })[symbol] || (symbol.toLowerCase()+'.com')}`;
+}
+
+function renderEarningsTab() {
+    if (!earningsData || !earningsData.days) return '<div style="color:var(--text-muted);padding:20px">No earnings data available.</div>';
+
+    const today = new Date();
+    const dates = [];
+    for (let i = -3; i <= 3; i++) {
+        const d = new Date(today); d.setDate(d.getDate() + i);
+        dates.push(d);
+    }
+
+    const dayCards = dates.map(d => {
+        const key = d.toISOString().slice(0,10);
+        const isToday = d.toDateString() === today.toDateString();
+        const dayName = d.toLocaleDateString('en-US', { weekday:'short' });
+        const dayLabel = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        const items = (earningsData.days[key] || []).slice(0, 10);
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+        if (isWeekend && items.length === 0) {
+            return `<div class="earn-day ${isToday ? 'earn-today' : ''}">
+                <div class="earn-day-hdr"><span class="earn-day-name">${dayName}</span><span class="earn-day-date">${dayLabel}</span></div>
+                <div style="color:var(--text-muted);font-size:0.7rem;text-align:center;padding:20px 0;opacity:0.5">Markets Closed</div>
+            </div>`;
+        }
+
+        const rows = items.map(e => {
+            const hasResult = e.epsActual !== null;
+            const surpriseColor = e.surprise > 0 ? 'var(--green)' : e.surprise < 0 ? 'var(--red)' : 'var(--text-dim)';
+            const timeLabel = e.time === 'BMO' ? '🌅' : e.time === 'AMC' ? '🌙' : '📊';
+            return `<div class="earn-row">
+                <img src="${getLogoUrl(e.symbol)}" class="earn-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">
+                <div class="earn-logo-fb" style="display:none">${e.symbol.charAt(0)}</div>
+                <div class="earn-info">
+                    <div class="earn-sym">${e.symbol}</div>
+                    <div class="earn-name">${e.name}</div>
+                </div>
+                <div class="earn-meta">
+                    <span style="font-size:0.55rem;color:var(--text-muted)">${timeLabel} ${e.time}</span>
+                    ${hasResult
+                        ? `<span style="font-size:0.65rem;font-weight:600;color:var(--text)">$${e.epsActual}</span><span style="color:${surpriseColor};font-size:0.6rem">${e.surprise > 0 ? '+' : ''}${e.surprise}%</span>`
+                        : `<span style="font-size:0.6rem;color:var(--text-dim)">Est $${e.epsEst}</span>`
+                    }
+                    <span style="font-size:0.55rem;color:var(--text-muted)">${e.mcap}</span>
+                </div>
+            </div>`;
+        }).join('');
+
+        return `<div class="earn-day ${isToday ? 'earn-today' : ''}">
+            <div class="earn-day-hdr">
+                <span class="earn-day-name">${dayName}</span>
+                <span class="earn-day-date">${dayLabel}</span>
+                ${isToday ? '<span class="earn-badge">TODAY</span>' : ''}
+                <span class="earn-count">${items.length}</span>
+            </div>
+            <div class="earn-list">${rows || '<div style="color:var(--text-muted);font-size:0.7rem;padding:8px 0">No major earnings</div>'}</div>
+        </div>`;
+    }).join('');
+
+    const updated = earningsData.lastUpdated ? new Date(earningsData.lastUpdated).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+
+    return `
+        <div class="section-header" style="color:var(--orange);display:flex;align-items:center;justify-content:space-between">
+            <span>US EARNINGS RELEASES <span class="count">7-day window</span></span>
+            <span style="font-size:0.65rem;color:var(--text-muted);font-family:var(--mono)">Updated ${updated}</span>
+        </div>
+        <div class="earn-grid">${dayCards}</div>
+    `;
+}
+
+// ─── KEYBOARD ───
+document.addEventListener('keydown', e => {
+    const tabs = ['overview','strategies','trades','indicators','dataflow','earnings'];
+    const n = parseInt(e.key);
+    if (n >= 1 && n <= 6) { activeTab = tabs[n-1]; render(); }
+});
+
+render();
+</script>
+</body>
+</html>

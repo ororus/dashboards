@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ororus Inc. — Organizational Chart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --surface: rgba(255,255,255,0.025);
+            --surface-2: rgba(255,255,255,0.045);
+            --surface-hover: rgba(255,255,255,0.065);
+            --border: rgba(255,255,255,0.07);
+            --border-hover: rgba(255,255,255,0.14);
+            --text: #e8e8ed;
+            --text-dim: rgba(255,255,255,0.5);
+            --text-muted: rgba(255,255,255,0.28);
+            --gold: #f59e0b;
+            --gold-dim: rgba(245,158,11,0.1);
+            --green: #10b981;
+            --green-dim: rgba(16,185,129,0.1);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.1);
+            --red: #ef4444;
+            --red-dim: rgba(239,68,68,0.08);
+            --purple: #a855f7;
+            --purple-dim: rgba(168,85,247,0.1);
+            --orange: #f97316;
+            --orange-dim: rgba(249,115,22,0.1);
+            --cyan: #22d3ee;
+            --cyan-dim: rgba(34,211,238,0.1);
+            --pink: #ec4899;
+            --pink-dim: rgba(236,72,153,0.1);
+            --teal: #14b8a6;
+            --teal-dim: rgba(20,184,166,0.1);
+            --indigo: #6366f1;
+            --indigo-dim: rgba(99,102,241,0.1);
+            --accent: #7c5cfc;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --mono: 'JetBrains Mono', monospace;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Inter',-apple-system,sans-serif;
+            background:var(--bg); color:var(--text);
+            min-height:100vh;
+        }
+        body::before {
+            content:''; position:fixed; inset:0;
+            background:
+                radial-gradient(ellipse 60% 40% at 15% 85%, rgba(124,92,252,0.06), transparent),
+                radial-gradient(ellipse 50% 35% at 85% 15%, rgba(245,158,11,0.05), transparent),
+                radial-gradient(ellipse 40% 30% at 50% 50%, rgba(34,211,238,0.03), transparent);
+            pointer-events:none; z-index:0;
+        }
+        .app { position:relative; z-index:1; max-width:1600px; margin:0 auto; padding:24px; }
+
+        /* Header */
+        .header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:20px 0 24px; border-bottom:1px solid var(--border); margin-bottom:28px;
+        }
+        .header h1 {
+            font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900; letter-spacing:3px;
+            background:linear-gradient(135deg, var(--accent), var(--gold), var(--cyan));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .header .sub { font-size:0.75rem; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+        .header-right { display:flex; align-items:center; gap:12px; }
+        .back-link {
+            font-size:0.78rem; color:var(--text-dim); text-decoration:none;
+            padding:7px 14px; border:1px solid var(--border); border-radius:18px; transition:all 0.2s;
+        }
+        .back-link:hover { color:var(--text); border-color:var(--border-hover); }
+        .clock { font-family:var(--mono); font-size:0.9rem; color:var(--cyan); text-shadow:0 0 8px rgba(34,211,238,0.3); }
+
+        /* Tabs */
+        .tabs {
+            display:flex; gap:4px; margin-bottom:28px;
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:var(--radius); padding:4px; overflow-x:auto;
+        }
+        .tab {
+            padding:10px 20px; border-radius:var(--radius-sm); border:none;
+            background:transparent; color:var(--text-dim); font-family:'Inter',sans-serif;
+            font-size:0.85rem; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+        }
+        .tab:hover { color:var(--text); background:rgba(255,255,255,0.04); }
+        .tab.active { color:#fff; background:var(--accent); box-shadow:0 0 20px rgba(124,92,252,0.3); }
+        .panel { display:none; } .panel.active { display:block; }
+
+        /* ─── Org Tree ─── */
+        .org-level { margin-bottom:32px; }
+        .level-label {
+            font-family:'Orbitron',sans-serif; font-size:0.7rem; letter-spacing:2px;
+            text-transform:uppercase; color:var(--text-muted); margin-bottom:12px;
+            padding-left:4px;
+        }
+        .node-grid {
+            display:flex; flex-wrap:wrap; gap:12px; justify-content:center;
+        }
+
+        /* Node card */
+        .node {
+            background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius);
+            padding:16px 20px; min-width:200px; max-width:280px; flex:1;
+            transition:all 0.2s; cursor:default; position:relative;
+        }
+        .node:hover { border-color:var(--border-hover); background:var(--surface-hover); transform:translateY(-2px); }
+        .node-emoji { font-size:1.5rem; margin-bottom:6px; }
+        .node-name { font-weight:700; font-size:0.95rem; margin-bottom:2px; }
+        .node-role { font-size:0.75rem; color:var(--text-dim); margin-bottom:6px; }
+        .node-company { font-family:var(--mono); font-size:0.65rem; padding:2px 8px; border-radius:4px; display:inline-block; }
+        .node-type { position:absolute; top:8px; right:10px; font-size:0.55rem; padding:2px 6px; border-radius:8px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+        .type-ai { background:rgba(124,92,252,0.1); color:var(--accent); border:1px solid rgba(124,92,252,0.2); }
+        .type-human { background:rgba(16,185,129,0.1); color:var(--green); border:1px solid rgba(16,185,129,0.2); }
+        .node-channels { font-size:0.65rem; color:var(--text-muted); margin-top:6px; }
+
+        /* Connector lines */
+        .connector {
+            display:flex; justify-content:center; padding:8px 0;
+        }
+        .conn-line {
+            width:2px; height:24px;
+            background:linear-gradient(to bottom, var(--accent), var(--border));
+        }
+        .conn-branch {
+            display:flex; align-items:flex-start; justify-content:center; gap:0; position:relative;
+            padding-top:12px;
+        }
+        .conn-branch::before {
+            content:''; position:absolute; top:0; left:15%; right:15%;
+            height:2px; background:var(--border);
+        }
+        .conn-branch .conn-down {
+            width:2px; height:12px; background:var(--border);
+        }
+
+        /* ─── Company Cards ─── */
+        .company-grid {
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:16px;
+        }
+        .company-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+            overflow:hidden; transition:all 0.2s;
+        }
+        .company-card:hover { border-color:var(--border-hover); }
+        .company-header {
+            padding:16px 20px; border-bottom:1px solid var(--border);
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .company-name {
+            font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700;
+            letter-spacing:1px;
+        }
+        .company-type {
+            font-family:var(--mono); font-size:0.6rem; padding:3px 8px;
+            border-radius:10px; text-transform:uppercase; letter-spacing:0.5px;
+        }
+        .company-body { padding:16px 20px; }
+        .company-desc { font-size:0.8rem; color:var(--text-dim); line-height:1.5; margin-bottom:12px; }
+        .company-team-list { display:flex; flex-direction:column; gap:6px; }
+        .team-row {
+            display:flex; align-items:center; gap:10px; padding:6px 8px;
+            border-radius:6px; transition:background 0.15s;
+        }
+        .team-row:hover { background:rgba(255,255,255,0.03); }
+        .team-row-emoji { font-size:1.1rem; width:28px; text-align:center; }
+        .team-row-name { font-size:0.82rem; font-weight:600; }
+        .team-row-role { font-size:0.7rem; color:var(--text-dim); }
+        .team-row-type {
+            font-size:0.55rem; padding:1px 5px; border-radius:6px; margin-left:auto;
+            font-weight:600; letter-spacing:0.3px;
+        }
+
+        /* ─── Cross-company ─── */
+        .cross-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:12px; }
+        .cross-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+            padding:16px 20px; transition:all 0.2s;
+        }
+        .cross-card:hover { border-color:var(--border-hover); }
+        .cross-title { font-size:0.85rem; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+        .cross-desc { font-size:0.78rem; color:var(--text-dim); line-height:1.4; }
+        .cross-companies { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+        .cross-tag {
+            font-family:var(--mono); font-size:0.6rem; padding:2px 8px;
+            border-radius:4px; border:1px solid var(--border);
+        }
+
+        /* ─── Stats ─── */
+        .stats-grid {
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:10px;
+            margin-bottom:28px;
+        }
+        .stat-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+            padding:14px; text-align:center;
+        }
+        .stat-val { font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:700; }
+        .stat-lbl { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-top:2px; }
+
+        /* Section header */
+        .sh {
+            font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700;
+            letter-spacing:2px; color:var(--text-dim); margin-bottom:16px;
+            padding-bottom:8px; border-bottom:1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width:768px) {
+            .company-grid { grid-template-columns:1fr; }
+            .node { min-width:160px; }
+        }
+
+        ::-webkit-scrollbar { width:5px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:3px; }
+    </style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+
+const companies = [
+    {
+        id:'lexyom', name:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)',
+        type:'Law Firm', desc:'Digital Financial Services Law Firm — Brokers, Banks, FIs (UAE & US). Provides regulatory/compliance moat for the entire Ororus ecosystem.',
+        team:[
+            { emoji:'👤', name:'Samar', role:'Partner', type:'human' },
+            { emoji:'👤', name:'Rita', role:'Associate', type:'human' },
+            { emoji:'👤', name:'Mira Moubarak', role:'Associate', type:'human' },
+            { emoji:'👤', name:'Mira Bazz', role:'Operations Coordinator', type:'human' },
+            { emoji:'👤', name:'Nadine', role:'Team Member', type:'human' },
+            { emoji:'⚖️', name:'William', role:'Paralegal & Admin', type:'ai', channels:'Lexyom Slack' },
+            { emoji:'⚖️', name:'Jason', role:'Marketing Coordinator', type:'ai', channels:'On-demand', note:'Reports to Ziad (CMO)' },
+        ]
+    },
+    {
+        id:'tradyom', name:'Tradyom', color:'var(--green)', colorDim:'var(--green-dim)',
+        type:'EdTech', desc:'Online educational platform for investing & trading. Home to Tradicators (AI bots & indicators), community education, and the Angelz syndicate.',
+        team:[
+            { emoji:'🦉', name:'Athena', role:'Business Analyst (Slack)', type:'ai', channels:'Tradyom Slack' },
+            { emoji:'📈', name:'Kevin', role:'Marketing Coordinator', type:'ai', channels:'Tradyom Slack', note:'Reports to Ziad (CMO)' },
+            { emoji:'👤', name:'Leen', role:'Presentations & Design', type:'human' },
+            { emoji:'👤', name:'Cynth', role:'Growth & Outreach', type:'human' },
+            { emoji:'👤', name:'Jihane', role:'Content & Operations', type:'human' },
+            { emoji:'👤', name:'Nour', role:'Tutorials & Research', type:'human' },
+        ]
+    },
+    {
+        id:'orora-capital', name:'Orora Capital', color:'var(--orange)', colorDim:'var(--orange-dim)',
+        type:'Investment Firm', desc:'Early-stage & AI startup investing. AI-powered trading desk with 4 bot architectures, 5 AI indicators, and daily automated research pipeline.',
+        team:[
+            { emoji:'🧮', name:'Nabu', role:'CIO & Head Quant', type:'ai', channels:'Discord + Tradyom Slack' },
+            { emoji:'📊', name:'Mark', role:'Quant & Technical Analyst', type:'ai', channels:'Cron Daily 7AM', note:'Reports to Nabu' },
+            { emoji:'📰', name:'Henry', role:'Financial & Fundamental Analyst', type:'ai', channels:'Cron Daily 7AM', note:'Reports to Nabu' },
+            { emoji:'🦉', name:'Athena', role:'Business Analyst', type:'ai', channels:'On-demand', note:'Reports to Nabu (OC work)' },
+        ]
+    },
+    {
+        id:'orora-invest', name:'Orora Invest', color:'var(--pink)', colorDim:'var(--pink-dim)',
+        type:'Investment Holding', desc:'Holds stakes in Rami\'s various investments. Currently holds 10% in Laia, Inc. (Delaware corp — Larissa Chaoul\'s art IP).',
+        team:[
+            { emoji:'🏛️', name:'Manus', role:'General Manager', type:'ai', channels:'On-demand' },
+            { emoji:'📣', name:'Alexandra', role:'PR Coordinator & Storyteller', type:'ai', channels:'On-demand', note:'Reports to Manus' },
+            { emoji:'✍️', name:'Alice', role:'Storyteller & Narrative Writer', type:'ai', channels:'On-demand', note:'Reports to Alexandra · Dedicated to Larissa Chaoul / Laia Inc.' },
+        ]
+    },
+    {
+        id:'akalabz', name:'Akalabz → Velved', color:'var(--purple)', colorDim:'var(--purple-dim)',
+        type:'IP & Web3', desc:'IP & rights holding company. Velved is the Web3 brand & NFT collection — mythology-based universe (Achilles vs Apollo, 13th Goddess, The Egg).',
+        team:[
+            { emoji:'🖋️', name:'Helen', role:'Writer & Mythologist', type:'ai', channels:'Slack' },
+        ]
+    },
+    {
+        id:'blaxity', name:'Blaxity', color:'var(--teal)', colorDim:'var(--teal-dim)',
+        type:'Dating & Social', desc:'App for polyamorous couples. Standalone entity under Ororus Inc. Community-driven growth, Slack workspace, Telegram presence.',
+        team:[
+            { emoji:'🍍', name:'Mia', role:'Community Coordinator', type:'ai', channels:'Telegram + Blaxity Slack' },
+            { emoji:'💜', name:'Liam', role:'Marketing Coordinator', type:'ai', channels:'On-demand', note:'Reports to Ziad (CMO)' },
+        ]
+    },
+    {
+        id:'remy', name:'Remy Remez', color:'var(--indigo)', colorDim:'var(--indigo-dim)',
+        type:'Fashion', desc:'Fashion brand. Collaborates with Velved and other brands across the Ororus portfolio.',
+        team:[]
+    },
+];
+
+const crossCompanyRoles = [
+    {
+        emoji:'⚡', name:'Vaya', role:'Chief Strategic Officer',
+        desc:'CSO for the entire Ororus holding. Strategy, coordination, team management across all companies. Reports directly to Rami.',
+        companies:['Ororus (All)'], color:'var(--gold)',
+        channels:'Telegram + WhatsApp + Webchat', model:'Opus 4.6', type:'ai'
+    },
+    {
+        emoji:'🎯', name:'Ziad', role:'Chief Marketing Officer',
+        desc:'CMO at the Ororus level. Sets marketing strategy across all brands. Manages Kevin (Tradyom), Liam (Blaxity), and Jason (Lexfeeld).',
+        companies:['Tradyom','Blaxity','Lexfeeld'], color:'var(--green)',
+        channels:'On-demand', model:'Flash 2.5', type:'ai'
+    },
+    {
+        emoji:'🦉', name:'Athena', role:'Business Analyst',
+        desc:'Cross-company business analyst. Serves Tradyom Slack as primary channel. Also supports Orora Capital for portfolio strategy and due diligence.',
+        companies:['All Companies','Orora Capital'], color:'var(--blue)',
+        channels:'Tradyom Slack + On-demand', model:'Flash 2.5', type:'ai'
+    },
+    {
+        emoji:'👤', name:'Hektor', role:'Advisor',
+        desc:'Human advisor. No shares, cannot overturn Rami. Provides strategic guidance across the portfolio.',
+        companies:['Ororus (Advisory)'], color:'var(--text-dim)',
+        channels:'—', model:'—', type:'human'
+    },
+];
+
+const interconnections = [
+    { title:'Angelz Syndicate', desc:'Angel investing syndicate — joint venture between Orora Capital and Tradyom. Deal flow from Tradyom community, capital from Orora Capital.', tags:['Orora Capital','Tradyom'] },
+    { title:'Tradicators Platform', desc:'Certified trading bots & AI indicators. Built by Orora Capital team (Nabu, Mark, Henry), sold through Tradyom platform. Lexyom provides regulatory compliance moat.', tags:['Orora Capital','Tradyom','Lexyom'] },
+    { title:'Velved × Remy Remez', desc:'Cross-brand collaboration — Velved IP/Web3 universe integrated with Remy Remez fashion collections.', tags:['Akalabz/Velved','Remy Remez'] },
+    { title:'Lexyom → All', desc:'Lexyom provides legal & regulatory services to every Ororus company. Critical infrastructure for Tradicators certification and Blaxity compliance.', tags:['Lexyom','All Companies'] },
+    { title:'Marketing Division', desc:'Ziad (CMO) oversees marketing coordinators embedded in individual companies: Kevin at Tradyom, Liam at Blaxity, Jason at Lexfeeld.', tags:['Tradyom','Blaxity','Lexfeeld'] },
+    { title:'Orora Invest → Laia Inc.', desc:'10% equity stake in Laia, Inc. (Delaware corp) — holds Larissa Chaoul\'s art IP. Alexandra and Alice manage PR and narrative for this investment.', tags:['Orora Invest','Laia Inc.'] },
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let activeTab = 'chart';
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+function render() {
+    const allTeam = companies.flatMap(c => c.team);
+    const aiCount = allTeam.filter(t => t.type === 'ai').length + crossCompanyRoles.filter(r => r.type === 'ai').length;
+    const humanCount = allTeam.filter(t => t.type === 'human').length + crossCompanyRoles.filter(r => r.type === 'human').length;
+
+    document.getElementById('app').innerHTML = `
+        <div class="header">
+            <div>
+                <h1>ORORUS, INC.</h1>
+                <div class="sub">Organizational Chart & Team Structure</div>
+            </div>
+            <div class="header-right">
+                <a href="agent-office.html" class="back-link">← Dashboard</a>
+                <div class="clock" id="clock"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val" style="color:var(--gold)">${companies.length}</div><div class="stat-lbl">Companies</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${aiCount}</div><div class="stat-lbl">AI Agents</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:var(--green)">${humanCount}</div><div class="stat-lbl">Humans</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${aiCount + humanCount}</div><div class="stat-lbl">Total Team</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:var(--orange)">${interconnections.length}</div><div class="stat-lbl">Interconnections</div></div>
+        </div>
+
+        <div class="tabs">
+            ${['chart','companies','connections'].map(t =>
+                `<button class="tab ${activeTab===t?'active':''}" data-tab="${t}">${
+                    {chart:'🏛️ Org Chart', companies:'🏢 Companies & Teams', connections:'🔗 Interconnections'}[t]
+                }</button>`
+            ).join('')}
+        </div>
+
+        <div class="panel ${activeTab==='chart'?'active':''}">${renderChart()}</div>
+        <div class="panel ${activeTab==='companies'?'active':''}">${renderCompanies()}</div>
+        <div class="panel ${activeTab==='connections'?'active':''}">${renderConnections()}</div>
+    `;
+
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeTab = t.dataset.tab; render(); }));
+    startClock();
+}
+
+function renderChart() {
+    return `
+        <!-- Level 0: CEO -->
+        <div class="org-level">
+            <div class="level-label">Founder & CEO</div>
+            <div class="node-grid" style="justify-content:center">
+                <div class="node" style="border-color:rgba(245,158,11,0.3);max-width:300px">
+                    <span class="node-type type-human">HUMAN</span>
+                    <div class="node-emoji">👑</div>
+                    <div class="node-name" style="color:var(--gold)">Rami</div>
+                    <div class="node-role">Founder & CEO — Ororus, Inc.</div>
+                    <span class="node-company" style="background:var(--gold-dim);color:var(--gold)">Ultimate Authority</span>
+                    <div class="node-channels">Telegram + WhatsApp + Slack</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="connector"><div class="conn-line"></div></div>
+
+        <!-- Level 1: C-Suite -->
+        <div class="org-level">
+            <div class="level-label">C-Suite & Advisory</div>
+            <div class="node-grid" style="justify-content:center">
+                <div class="node" style="border-color:rgba(245,158,11,0.2)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">⚡</div>
+                    <div class="node-name" style="color:var(--gold)">Vaya</div>
+                    <div class="node-role">Chief Strategic Officer</div>
+                    <span class="node-company" style="background:var(--gold-dim);color:var(--gold)">Ororus (All)</span>
+                    <div class="node-channels">Opus 4.6 · Telegram + WhatsApp + Webchat</div>
+                </div>
+                <div class="node" style="border-color:rgba(249,115,22,0.2)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🧮</div>
+                    <div class="node-name" style="color:var(--orange)">Nabu</div>
+                    <div class="node-role">CIO & Head Quant</div>
+                    <span class="node-company" style="background:var(--orange-dim);color:var(--orange)">Orora Capital</span>
+                    <div class="node-channels">Flash 2.5 · Discord + Tradyom Slack</div>
+                </div>
+                <div class="node" style="border-color:rgba(16,185,129,0.2)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🎯</div>
+                    <div class="node-name" style="color:var(--green)">Ziad</div>
+                    <div class="node-role">Chief Marketing Officer</div>
+                    <span class="node-company" style="background:var(--green-dim);color:var(--green)">Ororus (Marketing)</span>
+                    <div class="node-channels">Flash 2.5 · On-demand</div>
+                </div>
+                <div class="node" style="border-color:rgba(236,72,153,0.2)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🏛️</div>
+                    <div class="node-name" style="color:var(--pink)">Manus</div>
+                    <div class="node-role">General Manager</div>
+                    <span class="node-company" style="background:var(--pink-dim);color:var(--pink)">Orora Invest</span>
+                    <div class="node-channels">Flash 2.5 · On-demand</div>
+                </div>
+                <div class="node" style="border-color:rgba(255,255,255,0.1)">
+                    <span class="node-type type-human">HUMAN</span>
+                    <div class="node-emoji">👤</div>
+                    <div class="node-name">Hektor</div>
+                    <div class="node-role">Advisor (no shares)</div>
+                    <span class="node-company" style="background:rgba(255,255,255,0.05);color:var(--text-dim)">Advisory</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="connector"><div class="conn-line"></div></div>
+
+        <!-- Level 2: Analysts, Coordinators, Specialists -->
+        <div class="org-level">
+            <div class="level-label">Analysts & Coordinators</div>
+            <div class="node-grid">
+                <!-- Orora Capital team (under Nabu) -->
+                <div class="node" style="border-color:rgba(249,115,22,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">📊</div>
+                    <div class="node-name">Mark</div>
+                    <div class="node-role">Quant & Technical Analyst</div>
+                    <span class="node-company" style="background:var(--orange-dim);color:var(--orange)">Orora Capital</span>
+                    <div class="node-channels">→ Nabu · Cron 7AM</div>
+                </div>
+                <div class="node" style="border-color:rgba(249,115,22,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">📰</div>
+                    <div class="node-name">Henry</div>
+                    <div class="node-role">Financial & Fundamental Analyst</div>
+                    <span class="node-company" style="background:var(--orange-dim);color:var(--orange)">Orora Capital</span>
+                    <div class="node-channels">→ Nabu · Cron 7AM</div>
+                </div>
+                <div class="node" style="border-color:rgba(59,130,246,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🦉</div>
+                    <div class="node-name">Athena</div>
+                    <div class="node-role">Business Analyst</div>
+                    <span class="node-company" style="background:var(--blue-dim);color:var(--blue)">All Companies</span>
+                    <div class="node-channels">→ Nabu (OC) · Tradyom Slack</div>
+                </div>
+                <!-- Marketing team (under Ziad) -->
+                <div class="node" style="border-color:rgba(16,185,129,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">📈</div>
+                    <div class="node-name">Kevin</div>
+                    <div class="node-role">Marketing Coordinator</div>
+                    <span class="node-company" style="background:var(--green-dim);color:var(--green)">Tradyom</span>
+                    <div class="node-channels">→ Ziad · Tradyom Slack</div>
+                </div>
+                <div class="node" style="border-color:rgba(16,185,129,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">💜</div>
+                    <div class="node-name">Liam</div>
+                    <div class="node-role">Marketing Coordinator</div>
+                    <span class="node-company" style="background:var(--teal-dim);color:var(--teal)">Blaxity</span>
+                    <div class="node-channels">→ Ziad · On-demand</div>
+                </div>
+                <div class="node" style="border-color:rgba(16,185,129,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">⚖️</div>
+                    <div class="node-name">Jason</div>
+                    <div class="node-role">Marketing Coordinator</div>
+                    <span class="node-company" style="background:var(--blue-dim);color:var(--blue)">Lexfeeld</span>
+                    <div class="node-channels">→ Ziad · On-demand</div>
+                </div>
+                <!-- Orora Invest team (under Manus) -->
+                <div class="node" style="border-color:rgba(236,72,153,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">📣</div>
+                    <div class="node-name">Alexandra</div>
+                    <div class="node-role">PR Coordinator & Storyteller</div>
+                    <span class="node-company" style="background:var(--pink-dim);color:var(--pink)">Orora Invest</span>
+                    <div class="node-channels">→ Manus · On-demand</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="connector"><div class="conn-line"></div></div>
+
+        <!-- Level 3: Specialists -->
+        <div class="org-level">
+            <div class="level-label">Specialists & Embedded Team</div>
+            <div class="node-grid">
+                <div class="node" style="border-color:rgba(168,85,247,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🖋️</div>
+                    <div class="node-name">Helen</div>
+                    <div class="node-role">Writer & Mythologist</div>
+                    <span class="node-company" style="background:var(--purple-dim);color:var(--purple)">Velved (Akalabz)</span>
+                    <div class="node-channels">Flash 2.5 · Slack</div>
+                </div>
+                <div class="node" style="border-color:rgba(20,184,166,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">🍍</div>
+                    <div class="node-name">Mia</div>
+                    <div class="node-role">Community Coordinator</div>
+                    <span class="node-company" style="background:var(--teal-dim);color:var(--teal)">Blaxity</span>
+                    <div class="node-channels">Flash 2.5 · Telegram + Slack</div>
+                </div>
+                <div class="node" style="border-color:rgba(59,130,246,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">⚖️</div>
+                    <div class="node-name">William</div>
+                    <div class="node-role">Paralegal & Admin</div>
+                    <span class="node-company" style="background:var(--blue-dim);color:var(--blue)">Lexyom</span>
+                    <div class="node-channels">Flash 2.5 · Lexyom Slack</div>
+                </div>
+                <div class="node" style="border-color:rgba(236,72,153,0.15)">
+                    <span class="node-type type-ai">AI</span>
+                    <div class="node-emoji">✍️</div>
+                    <div class="node-name">Alice</div>
+                    <div class="node-role">Storyteller & Narrative Writer</div>
+                    <span class="node-company" style="background:var(--pink-dim);color:var(--pink)">Laia Inc. (Orora Invest)</span>
+                    <div class="node-channels">→ Alexandra · Dedicated to Larissa Chaoul</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="connector"><div class="conn-line"></div></div>
+
+        <!-- Level 4: Human team -->
+        <div class="org-level">
+            <div class="level-label">Human Team Members</div>
+            <div class="node-grid">
+                ${[
+                    { emoji:'👤', name:'Samar', role:'Partner', company:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)' },
+                    { emoji:'👤', name:'Rita', role:'Associate', company:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)' },
+                    { emoji:'👤', name:'Mira Moubarak', role:'Associate', company:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)' },
+                    { emoji:'👤', name:'Mira Bazz', role:'Operations Coordinator', company:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)' },
+                    { emoji:'👤', name:'Nadine', role:'Team Member', company:'Lexyom', color:'var(--blue)', colorDim:'var(--blue-dim)' },
+                    { emoji:'👤', name:'Leen', role:'Presentations & Design', company:'Tradyom', color:'var(--green)', colorDim:'var(--green-dim)' },
+                    { emoji:'👤', name:'Cynth', role:'Growth & Outreach', company:'Tradyom', color:'var(--green)', colorDim:'var(--green-dim)' },
+                    { emoji:'👤', name:'Jihane', role:'Content & Operations', company:'Tradyom', color:'var(--green)', colorDim:'var(--green-dim)' },
+                    { emoji:'👤', name:'Nour', role:'Tutorials & Research', company:'Tradyom', color:'var(--green)', colorDim:'var(--green-dim)' },
+                ].map(p => `
+                    <div class="node" style="border-color:rgba(255,255,255,0.06);min-width:170px">
+                        <span class="node-type type-human">HUMAN</span>
+                        <div class="node-emoji">${p.emoji}</div>
+                        <div class="node-name">${p.name}</div>
+                        <div class="node-role">${p.role}</div>
+                        <span class="node-company" style="background:${p.colorDim};color:${p.color}">${p.company}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <!-- Reporting Lines Legend -->
+        <div style="margin-top:32px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+            <div class="sh" style="border:none;padding:0;margin-bottom:12px">REPORTING LINES</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;font-size:0.8rem;color:var(--text-dim)">
+                <div>📊 Mark → 🧮 Nabu</div>
+                <div>📰 Henry → 🧮 Nabu</div>
+                <div>🦉 Athena → 🧮 Nabu <span style="color:var(--text-muted)">(OC work)</span></div>
+                <div>📈 Kevin → 🎯 Ziad</div>
+                <div>💜 Liam → 🎯 Ziad</div>
+                <div>⚖️ Jason → 🎯 Ziad</div>
+                <div>📣 Alexandra → 🏛️ Manus</div>
+                <div>✍️ Alice → 📣 Alexandra</div>
+                <div>⚡ Vaya → 👑 Rami <span style="color:var(--text-muted)">(direct)</span></div>
+                <div>🧮 Nabu → 👑 Rami <span style="color:var(--text-muted)">(direct)</span></div>
+                <div>🎯 Ziad → 👑 Rami <span style="color:var(--text-muted)">(direct)</span></div>
+                <div>🏛️ Manus → 👑 Rami <span style="color:var(--text-muted)">(direct)</span></div>
+            </div>
+        </div>
+    `;
+}
+
+function renderCompanies() {
+    return `
+        <div class="company-grid">
+            ${companies.map(c => `
+                <div class="company-card">
+                    <div class="company-header">
+                        <div class="company-name" style="color:${c.color}">${c.name}</div>
+                        <span class="company-type" style="background:${c.colorDim};color:${c.color};border:1px solid ${c.color}22">${c.type}</span>
+                    </div>
+                    <div class="company-body">
+                        <div class="company-desc">${c.desc}</div>
+                        ${c.team.length > 0 ? `
+                            <div class="company-team-list">
+                                ${c.team.map(t => `
+                                    <div class="team-row">
+                                        <span class="team-row-emoji">${t.emoji}</span>
+                                        <div>
+                                            <div class="team-row-name">${t.name}</div>
+                                            <div class="team-row-role">${t.role}${t.note ? ' · <span style="color:var(--cyan)">'+t.note+'</span>' : ''}${t.channels ? ' · '+t.channels : ''}</div>
+                                        </div>
+                                        <span class="team-row-type ${t.type === 'ai' ? 'type-ai' : 'type-human'}">${t.type.toUpperCase()}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:12px">No dedicated team yet</div>'}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderConnections() {
+    return `
+        <div class="sh">CROSS-COMPANY ROLES</div>
+        <div class="cross-grid" style="margin-bottom:32px">
+            ${crossCompanyRoles.map(r => `
+                <div class="cross-card">
+                    <div class="cross-title"><span style="font-size:1.2rem">${r.emoji}</span> <span style="color:${r.color}">${r.name}</span> — ${r.role}</div>
+                    <div class="cross-desc">${r.desc}</div>
+                    <div class="cross-companies">
+                        ${r.companies.map(c => `<span class="cross-tag" style="color:var(--cyan)">${c}</span>`).join('')}
+                        <span class="cross-tag">${r.channels}</span>
+                        ${r.model !== '—' ? `<span class="cross-tag" style="color:var(--accent)">${r.model}</span>` : ''}
+                        <span class="cross-tag ${r.type === 'ai' ? 'type-ai' : 'type-human'}" style="padding:2px 6px">${r.type.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="sh">COMPANY INTERCONNECTIONS</div>
+        <div class="cross-grid">
+            ${interconnections.map(i => `
+                <div class="cross-card">
+                    <div class="cross-title">🔗 ${i.title}</div>
+                    <div class="cross-desc">${i.desc}</div>
+                    <div class="cross-companies">
+                        ${i.tags.map(t => `<span class="cross-tag" style="color:var(--gold)">${t}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function startClock() {
+    function tick() {
+        const el = document.getElementById('clock');
+        if (el) el.textContent = new Date().toLocaleString('en-US',{timeZone:'Asia/Dubai',weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' GST';
+    }
+    tick(); setInterval(tick, 1000);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key==='1') { activeTab='chart'; render(); }
+    if (e.key==='2') { activeTab='companies'; render(); }
+    if (e.key==='3') { activeTab='connections'; render(); }
+});
+
+render();
+</script>
+</body>
+</html>

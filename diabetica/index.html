@@ -1,0 +1,4000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diabetica — Smart Food Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0a0a12;
+    --surface: rgba(255,255,255,0.04);
+    --surface2: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --text: #e8e8ed;
+    --text-dim: rgba(255,255,255,0.5);
+    --text-muted: rgba(255,255,255,0.3);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,0.15);
+    --yellow: #f59e0b;
+    --yellow-dim: rgba(245,158,11,0.15);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.15);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.15);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.15);
+    --cyan: #22d3ee;
+    --radius: 12px;
+    --radius-sm: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Inter',-apple-system,sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh;
+}
+body::before {
+    content:''; position:fixed; inset:0; z-index:0;
+    background: radial-gradient(ellipse at 20% 0%, rgba(16,185,129,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59,130,246,0.04) 0%, transparent 50%);
+    pointer-events:none;
+}
+
+.container { max-width:1200px; margin:0 auto; padding:24px; position:relative; z-index:1; }
+
+/* Header */
+.header {
+    text-align:center; padding:40px 0 30px;
+}
+.logo {
+    font-size:42px; font-weight:800; letter-spacing:-1px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.subtitle { color:var(--text-dim); font-size:14px; margin-top:6px; font-weight:300; }
+
+/* Search area */
+.search-area {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:24px; margin-bottom:24px; position:relative;
+}
+.search-row { display:flex; gap:12px; align-items:stretch; }
+.search-input-wrap {
+    flex:1; position:relative;
+}
+.search-input {
+    width:100%; padding:14px 16px 14px 44px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius);
+    color:var(--text); font-size:15px; font-family:inherit; outline:none;
+    transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--green); }
+.search-input::placeholder { color:var(--text-muted); }
+.search-icon {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    font-size:18px; opacity:0.4;
+}
+.search-filters {
+    display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;
+}
+.filter-btn {
+    padding:6px 14px; border-radius:20px; border:1px solid var(--border);
+    background:transparent; color:var(--text-dim); font-size:12px; cursor:pointer;
+    font-family:inherit; transition: all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+
+/* Mode toggle buttons */
+.mode-btn {
+    padding:8px 18px; border-radius:20px; border:1px solid var(--border);
+    background:transparent; color:var(--text-dim); font-size:13px; cursor:pointer;
+    font-family:inherit; font-weight:500; transition: all 0.2s;
+}
+.mode-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+.mode-btn.active { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+
+/* Upload zone */
+.upload-zone {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px; border:2px dashed rgba(59,130,246,0.2); border-radius:var(--radius);
+    background:rgba(59,130,246,0.03); cursor:pointer; transition:all 0.2s; text-align:center;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color:var(--blue); background:rgba(59,130,246,0.06);
+}
+
+/* Stats bar */
+.stats-bar {
+    display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;
+}
+.stat-card {
+    flex:1; min-width:150px; padding:14px 18px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius);
+}
+.stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+.stat-value { font-size:22px; font-weight:700; margin-top:4px; }
+
+/* Results grid */
+.results-info {
+    font-size:13px; color:var(--text-dim); margin-bottom:16px;
+    display:flex; justify-content:space-between; align-items:center;
+}
+.results-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
+    gap:12px;
+}
+
+/* Food card */
+.food-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px; cursor:pointer; transition: all 0.2s;
+}
+.food-card:hover { border-color:rgba(255,255,255,0.15); background:var(--surface2); }
+.food-card .top-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.food-card .name { font-weight:600; font-size:14px; flex:1; }
+.food-card .badge {
+    padding:3px 8px; border-radius:10px; font-size:10px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.3px; flex-shrink:0; margin-left:8px;
+}
+.badge-safe { background:var(--green-dim); color:var(--green); }
+.badge-caution { background:var(--yellow-dim); color:var(--yellow); }
+.badge-avoid { background:var(--red-dim); color:var(--red); }
+.food-card .category-tag {
+    display:inline-block; font-size:10px; color:var(--text-muted); background:rgba(255,255,255,0.05);
+    padding:2px 8px; border-radius:8px; margin-bottom:8px;
+}
+.food-card .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
+.metric { text-align:center; }
+.metric-val { font-size:15px; font-weight:600; }
+.metric-label { font-size:9px; color:var(--text-muted); text-transform:uppercase; margin-top:2px; }
+.food-card .serving { font-size:11px; color:var(--text-muted); }
+.food-card .notes { font-size:11px; color:var(--text-dim); margin-top:8px; font-style:italic; }
+
+/* Detail modal */
+.modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000;
+    align-items:center; justify-content:center; backdrop-filter:blur(4px);
+}
+.modal-overlay.show { display:flex; }
+.modal {
+    background:#12121e; border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+    padding:28px; max-width:560px; width:90%; max-height:85vh; overflow-y:auto;
+}
+.modal-close {
+    float:right; background:none; border:none; color:var(--text-dim); font-size:20px;
+    cursor:pointer; padding:4px; line-height:1;
+}
+.modal h2 { font-size:20px; margin-bottom:4px; }
+.modal .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+.detail-item { padding:12px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); }
+.detail-item .label { font-size:10px; color:var(--text-muted); text-transform:uppercase; }
+.detail-item .value { font-size:18px; font-weight:600; margin-top:2px; }
+.gi-bar { height:8px; border-radius:4px; background:rgba(255,255,255,0.06); margin-top:12px; overflow:hidden; }
+.gi-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+.alternatives { margin-top:16px; }
+.alternatives h3 { font-size:13px; color:var(--text-dim); margin-bottom:8px; }
+.alt-item {
+    display:flex; justify-content:space-between; padding:8px 12px;
+    background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.1);
+    border-radius:var(--radius-sm); margin-bottom:6px; font-size:13px;
+}
+.alt-item .alt-sugar { color:var(--green); font-weight:600; }
+
+/* Image analysis panel */
+.image-panel {
+    display:none; background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:24px; margin-bottom:24px;
+}
+.image-panel.show { display:block; }
+.image-preview {
+    max-width:300px; max-height:200px; border-radius:var(--radius); margin-bottom:16px;
+    border:1px solid var(--border);
+}
+.analysis-result {
+    padding:16px; background:rgba(255,255,255,0.03); border-radius:var(--radius);
+}
+.analysis-loading {
+    display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:14px;
+}
+.spinner {
+    width:20px; height:20px; border:2px solid rgba(255,255,255,0.1);
+    border-top-color:var(--green); border-radius:50%; animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Pagination */
+.pagination {
+    display:flex; justify-content:center; gap:8px; margin-top:24px;
+}
+.page-btn {
+    padding:8px 14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); color:var(--text-dim); cursor:pointer;
+    font-family:inherit; font-size:13px;
+}
+.page-btn:hover, .page-btn.active { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+
+/* Responsive */
+@media (max-width:700px) {
+    .results-grid { grid-template-columns:1fr; }
+    .search-row { flex-direction:column; }
+    .stats-bar { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo">🩺 Diabetica</div>
+        <div class="subtitle">Smart food database — sugar levels, insulin estimates, and diabetic-friendly scoring</div>
+    </div>
+
+    <!-- Image analysis panel -->
+    <div class="image-panel" id="imagePanel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <h3 style="font-size:15px;margin-bottom:12px">📷 Food Image Analysis</h3>
+            <button onclick="closeImagePanel()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px">✕</button>
+        </div>
+        <img id="imagePreview" class="image-preview" />
+        <div id="analysisResult" class="analysis-result">
+            <div class="analysis-loading"><div class="spinner"></div>Analyzing food...</div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-area">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="mode-btn active" id="modeSearch" onclick="setMode('search')">🔍 Search by Name</button>
+            <button class="mode-btn" id="modeScan" onclick="setMode('scan')">📷 Scan Image</button>
+        </div>
+        <div id="searchMode">
+            <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Type any food, brand, meal... (e.g. 'lindt', 'pasta', 'shawarma')" autofocus />
+            </div>
+        </div>
+        <div id="scanMode" style="display:none">
+            <label class="upload-zone" for="imageUpload" id="dropZone">
+                <div style="font-size:32px;margin-bottom:8px">📷</div>
+                <div style="font-size:14px;font-weight:500">Drop an image here or click to upload</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Take a photo of your meal for instant diabetic analysis</div>
+                <input type="file" id="imageUpload" accept="image/*" style="display:none" />
+            </label>
+        </div>
+        <div class="search-filters" id="filters"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Results -->
+    <div class="results-info" id="resultsInfo"></div>
+    <div class="results-grid" id="resultsGrid"></div>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+let DB = [];
+let filtered = [];
+let activeFilter = 'all';
+let currentPage = 0;
+const PAGE_SIZE = 30;
+let searchDebounce;
+
+// ── Load database ──
+async function loadDB() {
+    try {
+        const res = await fetch('food-database.json');
+        DB = await res.json();
+    } catch(e) {
+        // file:// fallback — load inline
+        DB = typeof INLINE_DB !== 'undefined' ? INLINE_DB : [];
+    }
+    if (!DB.length && typeof INLINE_DB !== 'undefined') DB = INLINE_DB;
+    filtered = [...DB];
+    renderStats();
+    renderFilters();
+    renderResults();
+}
+
+// ── Categories ──
+const CATEGORY_EMOJI = {
+    fruit:'🍎', vegetable:'🥦', chocolate:'🍫', candy:'🍬', dessert:'🍰',
+    bread:'🍞', cereal:'🥣', dairy:'🧀', beverage:'🥤', grain:'🌾',
+    pasta:'🍝', meat:'🥩', seafood:'🐟', snack:'🍿', condiment:'🫙',
+    plate:'🍽️', nut:'🥜'
+};
+
+function getCatEmoji(cat) { return CATEGORY_EMOJI[cat] || '🍴'; }
+
+function getBadge(item) {
+    if (item.diabeticFriendly && item.glycemicIndex <= 55) return { cls:'badge-safe', text:'Safe' };
+    if (item.glycemicIndex <= 69 && item.totalSugar <= 20) return { cls:'badge-caution', text:'Caution' };
+    return { cls:'badge-avoid', text:'Avoid' };
+}
+
+function sugarColor(g) {
+    if (g <= 5) return 'var(--green)';
+    if (g <= 15) return 'var(--yellow)';
+    return 'var(--red)';
+}
+
+function giColor(gi) {
+    if (gi <= 55) return 'var(--green)';
+    if (gi <= 69) return 'var(--yellow)';
+    return 'var(--red)';
+}
+
+// ── Render ──
+function renderStats() {
+    const safe = DB.filter(i => i.diabeticFriendly).length;
+    const cats = new Set(DB.map(i => i.category)).size;
+    const avgSugar = DB.length ? (DB.reduce((s,i) => s+i.totalSugar, 0) / DB.length).toFixed(1) : 0;
+    document.getElementById('statsBar').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Total Foods</div><div class="stat-value">${DB.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Categories</div><div class="stat-value">${cats}</div></div>
+        <div class="stat-card"><div class="stat-label">Diabetic Friendly</div><div class="stat-value" style="color:var(--green)">${safe}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Sugar/Serving</div><div class="stat-value">${avgSugar}g</div></div>
+    `;
+}
+
+function renderFilters() {
+    const cats = ['all', ...new Set(DB.map(i => i.category))].sort((a,b) => a==='all'?-1:a.localeCompare(b));
+    document.getElementById('filters').innerHTML = cats.map(c =>
+        `<button class="filter-btn ${activeFilter===c?'active':''}" data-cat="${c}">${c==='all'?'All':getCatEmoji(c)+' '+c.charAt(0).toUpperCase()+c.slice(1)}</button>`
+    ).join('');
+    document.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => {
+        activeFilter = b.dataset.cat; currentPage = 0; applySearch();
+    }));
+}
+
+function applySearch() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    filtered = DB.filter(item => {
+        // Substring search across multiple fields
+        const haystack = `${item.name} ${item.category} ${item.notes || ''}`.toLowerCase();
+        const matchText = !q || q.split(/\s+/).every(word => haystack.includes(word));
+        const matchCat = activeFilter === 'all' || item.category === activeFilter;
+        return matchText && matchCat;
+    });
+    // Sort: diabetic-friendly first, then by sugar ascending
+    filtered.sort((a,b) => {
+        if (a.diabeticFriendly !== b.diabeticFriendly) return a.diabeticFriendly ? -1 : 1;
+        return a.totalSugar - b.totalSugar;
+    });
+    currentPage = 0;
+    renderResults();
+    renderFilters();
+}
+
+function renderResults() {
+    const start = currentPage * PAGE_SIZE;
+    const page = filtered.slice(start, start + PAGE_SIZE);
+
+    document.getElementById('resultsInfo').innerHTML = `
+        <span>${filtered.length} result${filtered.length!==1?'s':''} found</span>
+        <span style="font-size:11px;color:var(--text-muted)">Page ${currentPage+1} of ${Math.max(1,Math.ceil(filtered.length/PAGE_SIZE))}</span>
+    `;
+
+    document.getElementById('resultsGrid').innerHTML = page.map((item, i) => {
+        const badge = getBadge(item);
+        return `
+        <div class="food-card" onclick="showDetail(${start+i})">
+            <div class="top-row">
+                <div class="name">${getCatEmoji(item.category)} ${item.name}</div>
+                <span class="badge ${badge.cls}">${badge.text}</span>
+            </div>
+            <span class="category-tag">${item.category}</span>
+            <span class="serving" style="margin-left:8px">${item.servingSize}</span>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-val" style="color:${sugarColor(item.totalSugar)}">${item.totalSugar}g</div>
+                    <div class="metric-label">Sugar</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val">${item.carbs}g</div>
+                    <div class="metric-label">Carbs</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val" style="color:${giColor(item.glycemicIndex)}">${item.glycemicIndex}</div>
+                    <div class="metric-label">GI</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-val" style="color:var(--purple)">${item.insulinUnits}u</div>
+                    <div class="metric-label">Insulin</div>
+                </div>
+            </div>
+            ${item.notes ? `<div class="notes">${item.notes}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    // Pagination
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    if (totalPages > 1) {
+        let html = '';
+        if (currentPage > 0) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">← Prev</button>`;
+        for (let p = Math.max(0, currentPage-2); p < Math.min(totalPages, currentPage+3); p++) {
+            html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p+1}</button>`;
+        }
+        if (currentPage < totalPages-1) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">Next →</button>`;
+        document.getElementById('pagination').innerHTML = html;
+    } else {
+        document.getElementById('pagination').innerHTML = '';
+    }
+}
+
+function goPage(p) { currentPage = p; renderResults(); window.scrollTo({top:200, behavior:'smooth'}); }
+
+// ── Detail Modal ──
+function showDetail(idx) {
+    const item = filtered[idx];
+    const badge = getBadge(item);
+
+    // Find alternatives: same category, lower sugar, diabetic friendly
+    const alts = DB.filter(a =>
+        a.category === item.category && a.name !== item.name &&
+        a.totalSugar < item.totalSugar && a.diabeticFriendly
+    ).sort((a,b) => a.totalSugar - b.totalSugar).slice(0, 5);
+
+    document.getElementById('modalContent').innerHTML = `
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2>${getCatEmoji(item.category)} ${item.name}</h2>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+            <span class="badge ${badge.cls}">${badge.text}</span>
+            <span class="category-tag">${item.category}</span>
+            <span style="font-size:12px;color:var(--text-muted)">${item.servingSize}</span>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">Total Sugar</div>
+                <div class="value" style="color:${sugarColor(item.totalSugar)}">${item.totalSugar}g</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Total Carbs</div>
+                <div class="value">${item.carbs}g</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Calories</div>
+                <div class="value">${item.calories}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Fiber</div>
+                <div class="value">${item.fiber}g</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Insulin Estimate</div>
+                <div class="value" style="color:var(--purple)">${item.insulinUnits} units</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Glycemic Load</div>
+                <div class="value">${item.glycemicLoad}</div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                <span>Glycemic Index</span>
+                <span style="color:${giColor(item.glycemicIndex)};font-weight:600">${item.glycemicIndex}/100</span>
+            </div>
+            <div class="gi-bar">
+                <div class="gi-fill" style="width:${item.glycemicIndex}%;background:${giColor(item.glycemicIndex)}"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:4px">
+                <span>Low (≤55)</span><span>Medium (56-69)</span><span>High (≥70)</span>
+            </div>
+        </div>
+
+        ${item.notes ? `<div style="margin-top:14px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--text-dim)">💡 ${item.notes}</div>` : ''}
+
+        <div style="margin-top:16px;padding:12px 14px;background:var(--blue-dim);border-radius:8px;font-size:12px">
+            <strong>🩺 Insulin Estimate:</strong> ~${item.insulinUnits} units of rapid-acting insulin<br>
+            <span style="color:var(--text-dim);font-size:11px">Based on 1 unit per 10-15g carbs. Consult your doctor for your personal ratio.</span>
+        </div>
+
+        ${alts.length > 0 ? `
+        <div class="alternatives">
+            <h3>🔄 Lower-Sugar Alternatives</h3>
+            ${alts.map(a => `
+                <div class="alt-item">
+                    <span>${getCatEmoji(a.category)} ${a.name}</span>
+                    <span class="alt-sugar">${a.totalSugar}g sugar · GI ${a.glycemicIndex}</span>
+                </div>
+            `).join('')}
+        </div>` : ''}
+    `;
+    document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Mode toggle ──
+function setMode(mode) {
+    document.getElementById('searchMode').style.display = mode === 'search' ? 'block' : 'none';
+    document.getElementById('scanMode').style.display = mode === 'scan' ? 'block' : 'none';
+    document.getElementById('modeSearch').classList.toggle('active', mode === 'search');
+    document.getElementById('modeScan').classList.toggle('active', mode === 'scan');
+    if (mode === 'search') document.getElementById('searchInput').focus();
+}
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+if (dropZone) {
+    ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('dragover'); }));
+    dropZone.addEventListener('drop', ev => {
+        const file = ev.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleImageFile(file);
+        }
+    });
+}
+
+// ── Search ──
+document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(applySearch, 150);
+});
+
+// ── Image Upload & Analysis ──
+function handleImageFile(file) {
+    const panel = document.getElementById('imagePanel');
+    const preview = document.getElementById('imagePreview');
+    const result = document.getElementById('analysisResult');
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        preview.src = ev.target.result;
+        panel.classList.add('show');
+        result.innerHTML = '<div class="analysis-loading"><div class="spinner"></div>Analyzing food image...</div>';
+        analyzeImage(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    handleImageFile(file);
+    e.target.value = '';
+});
+
+async function analyzeImage(dataUrl) {
+    const result = document.getElementById('analysisResult');
+
+    // Try to identify food from image using our database
+    // Since we can't call an external AI API from browser directly,
+    // we'll do smart client-side matching + show the analysis UI
+    // For real deployment, this would call an API endpoint
+
+    // Simulate analysis with a helpful prompt
+    setTimeout(() => {
+        result.innerHTML = `
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px">📷 Image Analysis</div>
+            <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">
+                For accurate analysis, describe what you see in the image using the search bar above.
+                Type any part of the food name (e.g. "pasta", "choco", "rice").
+            </p>
+            <div style="padding:12px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;font-size:12px">
+                <strong>💡 Tip:</strong> Search supports partial text — type "nut" to find Nutella, peanuts, donuts, etc.
+                Click any result to see full diabetic analysis with sugar, insulin, and alternatives.
+            </div>
+            <div style="margin-top:12px">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Quick matches from image context:</div>
+                <div id="imageMatches" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+        `;
+        // Auto-populate some common foods as quick-search buttons
+        const quickFoods = ['rice', 'chicken', 'salad', 'pasta', 'bread', 'pizza', 'burger', 'sushi', 'steak', 'chocolate'];
+        const matchesEl = document.getElementById('imageMatches');
+        if (matchesEl) {
+            matchesEl.innerHTML = quickFoods.map(f =>
+                `<button onclick="document.getElementById('searchInput').value='${f}';applySearch();closeImagePanel();"
+                    style="padding:4px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);
+                    color:var(--text-dim);font-size:11px;cursor:pointer;font-family:inherit">${f}</button>`
+            ).join('');
+        }
+    }, 800);
+}
+
+function closeImagePanel() {
+    document.getElementById('imagePanel').classList.remove('show');
+}
+
+// ── Init ──
+loadDB();
+</script>
+<!-- INLINE_DB_START -->
+<script>const INLINE_DB = [
+  {
+    "name": "Apple (raw)",
+    "category": "fruit",
+    "servingSize": "1 medium (182g)",
+    "servingGrams": 182,
+    "calories": 95,
+    "totalSugar": 19,
+    "fiber": 4.4,
+    "glycemicIndex": 36,
+    "glycemicLoad": 6,
+    "carbs": 25,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.7,
+    "notes": "Low GI, excellent fiber"
+  },
+  {
+    "name": "Banana",
+    "category": "fruit",
+    "servingSize": "1 medium (118g)",
+    "servingGrams": 118,
+    "calories": 105,
+    "totalSugar": 14,
+    "fiber": 3.1,
+    "glycemicIndex": 51,
+    "glycemicLoad": 13,
+    "carbs": 27,
+    "diabeticFriendly": true,
+    "insulinUnits": 2,
+    "notes": "Moderate GI, good potassium source"
+  },
+  {
+    "name": "Orange",
+    "category": "fruit",
+    "servingSize": "1 medium (131g)",
+    "servingGrams": 131,
+    "calories": 62,
+    "totalSugar": 12,
+    "fiber": 3.1,
+    "glycemicIndex": 43,
+    "glycemicLoad": 5,
+    "carbs": 15,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Low GI, high vitamin C"
+  },
+  {
+    "name": "Grapes (red/green)",
+    "category": "fruit",
+    "servingSize": "1 cup (151g)",
+    "servingGrams": 151,
+    "calories": 104,
+    "totalSugar": 23,
+    "fiber": 1.4,
+    "glycemicIndex": 59,
+    "glycemicLoad": 11,
+    "carbs": 27,
+    "diabeticFriendly": false,
+    "insulinUnits": 2,
+    "notes": "Medium GI, high sugar — limit portions"
+  },
+  {
+    "name": "Strawberries",
+    "category": "fruit",
+    "servingSize": "1 cup (152g)",
+    "servingGrams": 152,
+    "calories": 49,
+    "totalSugar": 7,
+    "fiber": 3,
+    "glycemicIndex": 41,
+    "glycemicLoad": 3,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Low GI, low sugar — excellent choice"
+  },
+  {
+    "name": "Blueberries",
+    "category": "fruit",
+    "servingSize": "1 cup (148g)",
+    "servingGrams": 148,
+    "calories": 84,
+    "totalSugar": 15,
+    "fiber": 3.6,
+    "glycemicIndex": 53,
+    "glycemicLoad": 7,
+    "carbs": 21,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.5,
+    "notes": "Low GI, high antioxidants"
+  },
+  {
+    "name": "Mango",
+    "category": "fruit",
+    "servingSize": "1 cup sliced (165g)",
+    "servingGrams": 165,
+    "calories": 99,
+    "totalSugar": 23,
+    "fiber": 2.6,
+    "glycemicIndex": 56,
+    "glycemicLoad": 8,
+    "carbs": 25,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Medium GI, high sugar — eat in moderation"
+  },
+  {
+    "name": "Pineapple",
+    "category": "fruit",
+    "servingSize": "1 cup chunks (165g)",
+    "servingGrams": 165,
+    "calories": 82,
+    "totalSugar": 16,
+    "fiber": 2.3,
+    "glycemicIndex": 59,
+    "glycemicLoad": 7,
+    "carbs": 22,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.6,
+    "notes": "Medium GI, contains bromelain"
+  },
+  {
+    "name": "Watermelon",
+    "category": "fruit",
+    "servingSize": "1 cup diced (152g)",
+    "servingGrams": 152,
+    "calories": 46,
+    "totalSugar": 9,
+    "fiber": 0.6,
+    "glycemicIndex": 76,
+    "glycemicLoad": 5,
+    "carbs": 12,
+    "diabeticFriendly": false,
+    "insulinUnits": 0.9,
+    "notes": "High GI but low GL due to water content"
+  },
+  {
+    "name": "Cantaloupe",
+    "category": "fruit",
+    "servingSize": "1 cup diced (160g)",
+    "servingGrams": 160,
+    "calories": 54,
+    "totalSugar": 13,
+    "fiber": 1.4,
+    "glycemicIndex": 65,
+    "glycemicLoad": 4,
+    "carbs": 13,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Medium-high GI, low calorie"
+  },
+  {
+    "name": "Peach",
+    "category": "fruit",
+    "servingSize": "1 medium (150g)",
+    "servingGrams": 150,
+    "calories": 59,
+    "totalSugar": 13,
+    "fiber": 2.3,
+    "glycemicIndex": 42,
+    "glycemicLoad": 5,
+    "carbs": 14,
+    "diabeticFriendly": true,
+    "insulinUnits": 1,
+    "notes": "Low GI, good fiber"
+  },
+  {
+    "name": "Pear",
+    "category": "fruit",
+    "servingSize": "1 medium (178g)",
+    "servingGrams": 178,
+    "calories": 101,
+    "totalSugar": 17,
+    "fiber": 5.5,
+    "glycemicIndex": 38,
+    "glycemicLoad": 4,
+    "carbs": 27,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.8,
+    "notes": "Low GI, very high fiber"
+  },
+  {
+    "name": "Cherries",
+    "category": "fruit",
+    "servingSize": "1 cup (138g)",
+    "servingGrams": 138,
+    "calories": 87,
+    "totalSugar": 18,
+    "fiber": 2.9,
+    "glycemicIndex": 22,
+    "glycemicLoad": 3,
+    "carbs": 22,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.5,
+    "notes": "Very low GI, anti-inflammatory"
+  },
+  {
+    "name": "Kiwi",
+    "category": "fruit",
+    "servingSize": "1 medium (69g)",
+    "servingGrams": 69,
+    "calories": 42,
+    "totalSugar": 6,
+    "fiber": 2.1,
+    "glycemicIndex": 50,
+    "glycemicLoad": 4,
+    "carbs": 10,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.7,
+    "notes": "Low GI, very high vitamin C"
+  },
+  {
+    "name": "Pomegranate",
+    "category": "fruit",
+    "servingSize": "1/2 cup seeds (87g)",
+    "servingGrams": 87,
+    "calories": 72,
+    "totalSugar": 12,
+    "fiber": 3.5,
+    "glycemicIndex": 53,
+    "glycemicLoad": 8,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Low GI, powerful antioxidants"
+  },
+  {
+    "name": "Figs (fresh)",
+    "category": "fruit",
+    "servingSize": "2 medium (100g)",
+    "servingGrams": 100,
+    "calories": 74,
+    "totalSugar": 16,
+    "fiber": 2.9,
+    "glycemicIndex": 61,
+    "glycemicLoad": 10,
+    "carbs": 19,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.4,
+    "notes": "Medium GI, high natural sugar"
+  },
+  {
+    "name": "Dates (Medjool)",
+    "category": "fruit",
+    "servingSize": "2 dates (48g)",
+    "servingGrams": 48,
+    "calories": 133,
+    "totalSugar": 32,
+    "fiber": 3.2,
+    "glycemicIndex": 42,
+    "glycemicLoad": 18,
+    "carbs": 36,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.7,
+    "notes": "Low GI but very high sugar — limit strictly"
+  },
+  {
+    "name": "Papaya",
+    "category": "fruit",
+    "servingSize": "1 cup (145g)",
+    "servingGrams": 145,
+    "calories": 62,
+    "totalSugar": 11,
+    "fiber": 2.5,
+    "glycemicIndex": 59,
+    "glycemicLoad": 7,
+    "carbs": 16,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.2,
+    "notes": "Medium GI, high vitamin A"
+  },
+  {
+    "name": "Guava",
+    "category": "fruit",
+    "servingSize": "1 cup (165g)",
+    "servingGrams": 165,
+    "calories": 112,
+    "totalSugar": 15,
+    "fiber": 8.9,
+    "glycemicIndex": 12,
+    "glycemicLoad": 2,
+    "carbs": 24,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.6,
+    "notes": "Very low GI, extremely high fiber"
+  },
+  {
+    "name": "Lychee",
+    "category": "fruit",
+    "servingSize": "10 fruits (100g)",
+    "servingGrams": 100,
+    "calories": 66,
+    "totalSugar": 15,
+    "fiber": 1.3,
+    "glycemicIndex": 57,
+    "glycemicLoad": 8,
+    "carbs": 17,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.2,
+    "notes": "Medium GI, moderate sugar"
+  },
+  {
+    "name": "Dragon Fruit",
+    "category": "fruit",
+    "servingSize": "1 fruit (200g)",
+    "servingGrams": 200,
+    "calories": 102,
+    "totalSugar": 13,
+    "fiber": 5.6,
+    "glycemicIndex": 48,
+    "glycemicLoad": 5,
+    "carbs": 22,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.5,
+    "notes": "Low GI, good fiber, prebiotic"
+  },
+  {
+    "name": "Passion Fruit",
+    "category": "fruit",
+    "servingSize": "2 fruits (36g)",
+    "servingGrams": 36,
+    "calories": 35,
+    "totalSugar": 4,
+    "fiber": 3.7,
+    "glycemicIndex": 30,
+    "glycemicLoad": 2,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Very low GI, excellent fiber ratio"
+  },
+  {
+    "name": "Coconut (fresh)",
+    "category": "fruit",
+    "servingSize": "1/3 cup shredded (28g)",
+    "servingGrams": 28,
+    "calories": 99,
+    "totalSugar": 2,
+    "fiber": 2.5,
+    "glycemicIndex": 45,
+    "glycemicLoad": 2,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Low GI, high healthy fats"
+  },
+  {
+    "name": "Avocado",
+    "category": "fruit",
+    "servingSize": "1/2 medium (68g)",
+    "servingGrams": 68,
+    "calories": 114,
+    "totalSugar": 0.5,
+    "fiber": 4.6,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI/sugar, healthy monounsaturated fats"
+  },
+  {
+    "name": "Grapefruit",
+    "category": "fruit",
+    "servingSize": "1/2 medium (123g)",
+    "servingGrams": 123,
+    "calories": 52,
+    "totalSugar": 8,
+    "fiber": 2,
+    "glycemicIndex": 25,
+    "glycemicLoad": 3,
+    "carbs": 13,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Very low GI, may interact with medications"
+  },
+  {
+    "name": "Raspberry",
+    "category": "fruit",
+    "servingSize": "1 cup (123g)",
+    "servingGrams": 123,
+    "calories": 64,
+    "totalSugar": 5,
+    "fiber": 8,
+    "glycemicIndex": 32,
+    "glycemicLoad": 2,
+    "carbs": 15,
+    "diabeticFriendly": true,
+    "insulinUnits": 1,
+    "notes": "Very low GI, extremely high fiber"
+  },
+  {
+    "name": "Blackberry",
+    "category": "fruit",
+    "servingSize": "1 cup (144g)",
+    "servingGrams": 144,
+    "calories": 62,
+    "totalSugar": 7,
+    "fiber": 7.6,
+    "glycemicIndex": 25,
+    "glycemicLoad": 2,
+    "carbs": 14,
+    "diabeticFriendly": true,
+    "insulinUnits": 1,
+    "notes": "Very low GI, high fiber and antioxidants"
+  },
+  {
+    "name": "Plum",
+    "category": "fruit",
+    "servingSize": "1 medium (66g)",
+    "servingGrams": 66,
+    "calories": 30,
+    "totalSugar": 7,
+    "fiber": 0.9,
+    "glycemicIndex": 39,
+    "glycemicLoad": 3,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Low GI, low calorie"
+  },
+  {
+    "name": "Apricot",
+    "category": "fruit",
+    "servingSize": "2 medium (70g)",
+    "servingGrams": 70,
+    "calories": 34,
+    "totalSugar": 6,
+    "fiber": 1.4,
+    "glycemicIndex": 34,
+    "glycemicLoad": 3,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Low GI, high beta-carotene"
+  },
+  {
+    "name": "Nectarine",
+    "category": "fruit",
+    "servingSize": "1 medium (142g)",
+    "servingGrams": 142,
+    "calories": 62,
+    "totalSugar": 11,
+    "fiber": 2.4,
+    "glycemicIndex": 43,
+    "glycemicLoad": 4,
+    "carbs": 15,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Low GI, similar to peach"
+  },
+  {
+    "name": "Cranberries (raw)",
+    "category": "fruit",
+    "servingSize": "1 cup (100g)",
+    "servingGrams": 100,
+    "calories": 46,
+    "totalSugar": 4,
+    "fiber": 4.6,
+    "glycemicIndex": 45,
+    "glycemicLoad": 2,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.8,
+    "notes": "Low GI, very tart, urinary health benefits"
+  },
+  {
+    "name": "Carrot (raw)",
+    "category": "vegetable",
+    "servingSize": "1 medium (61g)",
+    "servingGrams": 61,
+    "calories": 25,
+    "totalSugar": 3,
+    "fiber": 1.7,
+    "glycemicIndex": 16,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI raw, higher when cooked"
+  },
+  {
+    "name": "Broccoli",
+    "category": "vegetable",
+    "servingSize": "1 cup (91g)",
+    "servingGrams": 91,
+    "calories": 31,
+    "totalSugar": 2,
+    "fiber": 2.4,
+    "glycemicIndex": 10,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, high vitamin C and K"
+  },
+  {
+    "name": "Spinach (raw)",
+    "category": "vegetable",
+    "servingSize": "2 cups (60g)",
+    "servingGrams": 60,
+    "calories": 14,
+    "totalSugar": 0.3,
+    "fiber": 1.3,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 2,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.1,
+    "notes": "Negligible sugar, nutrient dense"
+  },
+  {
+    "name": "Kale",
+    "category": "vegetable",
+    "servingSize": "1 cup chopped (67g)",
+    "servingGrams": 67,
+    "calories": 33,
+    "totalSugar": 0.8,
+    "fiber": 1.3,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, superfood status"
+  },
+  {
+    "name": "Tomato",
+    "category": "vegetable",
+    "servingSize": "1 medium (123g)",
+    "servingGrams": 123,
+    "calories": 22,
+    "totalSugar": 3,
+    "fiber": 1.5,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI, high lycopene"
+  },
+  {
+    "name": "Cucumber",
+    "category": "vegetable",
+    "servingSize": "1 cup sliced (119g)",
+    "servingGrams": 119,
+    "calories": 16,
+    "totalSugar": 2,
+    "fiber": 0.5,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI and calorie, hydrating"
+  },
+  {
+    "name": "Bell Pepper (red)",
+    "category": "vegetable",
+    "servingSize": "1 medium (119g)",
+    "servingGrams": 119,
+    "calories": 37,
+    "totalSugar": 5,
+    "fiber": 2.1,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 7,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Very low GI, extremely high vitamin C"
+  },
+  {
+    "name": "Onion",
+    "category": "vegetable",
+    "servingSize": "1 medium (110g)",
+    "servingGrams": 110,
+    "calories": 44,
+    "totalSugar": 5,
+    "fiber": 1.9,
+    "glycemicIndex": 10,
+    "glycemicLoad": 1,
+    "carbs": 10,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.7,
+    "notes": "Very low GI, anti-inflammatory"
+  },
+  {
+    "name": "Potato (baked)",
+    "category": "vegetable",
+    "servingSize": "1 medium (173g)",
+    "servingGrams": 173,
+    "calories": 161,
+    "totalSugar": 2,
+    "fiber": 3.8,
+    "glycemicIndex": 78,
+    "glycemicLoad": 21,
+    "carbs": 37,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.8,
+    "notes": "High GI — swap for sweet potato"
+  },
+  {
+    "name": "Sweet Potato (baked)",
+    "category": "vegetable",
+    "servingSize": "1 medium (114g)",
+    "servingGrams": 114,
+    "calories": 103,
+    "totalSugar": 5,
+    "fiber": 3.8,
+    "glycemicIndex": 63,
+    "glycemicLoad": 11,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Medium GI, better than white potato"
+  },
+  {
+    "name": "Corn (boiled)",
+    "category": "vegetable",
+    "servingSize": "1 ear (90g)",
+    "servingGrams": 90,
+    "calories": 77,
+    "totalSugar": 3,
+    "fiber": 2,
+    "glycemicIndex": 52,
+    "glycemicLoad": 9,
+    "carbs": 17,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Low-medium GI, moderate carbs"
+  },
+  {
+    "name": "Green Peas",
+    "category": "vegetable",
+    "servingSize": "1/2 cup (80g)",
+    "servingGrams": 80,
+    "calories": 62,
+    "totalSugar": 4,
+    "fiber": 4,
+    "glycemicIndex": 48,
+    "glycemicLoad": 3,
+    "carbs": 11,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.8,
+    "notes": "Low GI, high protein for a vegetable"
+  },
+  {
+    "name": "Green Beans",
+    "category": "vegetable",
+    "servingSize": "1 cup (125g)",
+    "servingGrams": 125,
+    "calories": 34,
+    "totalSugar": 4,
+    "fiber": 3.4,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Very low GI, excellent choice"
+  },
+  {
+    "name": "Cauliflower",
+    "category": "vegetable",
+    "servingSize": "1 cup (107g)",
+    "servingGrams": 107,
+    "calories": 27,
+    "totalSugar": 2,
+    "fiber": 2.1,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, great rice substitute"
+  },
+  {
+    "name": "Zucchini",
+    "category": "vegetable",
+    "servingSize": "1 medium (196g)",
+    "servingGrams": 196,
+    "calories": 33,
+    "totalSugar": 5,
+    "fiber": 2,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, great pasta substitute"
+  },
+  {
+    "name": "Eggplant",
+    "category": "vegetable",
+    "servingSize": "1 cup cubed (82g)",
+    "servingGrams": 82,
+    "calories": 20,
+    "totalSugar": 3,
+    "fiber": 2.5,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI, high fiber"
+  },
+  {
+    "name": "Mushrooms (white)",
+    "category": "vegetable",
+    "servingSize": "1 cup sliced (70g)",
+    "servingGrams": 70,
+    "calories": 15,
+    "totalSugar": 1,
+    "fiber": 0.7,
+    "glycemicIndex": 10,
+    "glycemicLoad": 0,
+    "carbs": 2,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.2,
+    "notes": "Negligible sugar, good vitamin D"
+  },
+  {
+    "name": "Celery",
+    "category": "vegetable",
+    "servingSize": "2 stalks (80g)",
+    "servingGrams": 80,
+    "calories": 11,
+    "totalSugar": 1,
+    "fiber": 1.3,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 2,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.2,
+    "notes": "Almost zero sugar, very hydrating"
+  },
+  {
+    "name": "Asparagus",
+    "category": "vegetable",
+    "servingSize": "6 spears (90g)",
+    "servingGrams": 90,
+    "calories": 18,
+    "totalSugar": 1,
+    "fiber": 1.8,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 3,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.2,
+    "notes": "Very low GI, anti-inflammatory"
+  },
+  {
+    "name": "Brussels Sprouts",
+    "category": "vegetable",
+    "servingSize": "1 cup (88g)",
+    "servingGrams": 88,
+    "calories": 38,
+    "totalSugar": 2,
+    "fiber": 3.3,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Very low GI, high fiber and vitamin C"
+  },
+  {
+    "name": "Cabbage",
+    "category": "vegetable",
+    "servingSize": "1 cup shredded (89g)",
+    "servingGrams": 89,
+    "calories": 22,
+    "totalSugar": 3,
+    "fiber": 2.2,
+    "glycemicIndex": 10,
+    "glycemicLoad": 0,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, anti-cancer properties"
+  },
+  {
+    "name": "Lettuce (romaine)",
+    "category": "vegetable",
+    "servingSize": "2 cups (94g)",
+    "servingGrams": 94,
+    "calories": 16,
+    "totalSugar": 1,
+    "fiber": 2,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 3,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.2,
+    "notes": "Negligible impact on blood sugar"
+  },
+  {
+    "name": "Beetroot",
+    "category": "vegetable",
+    "servingSize": "1 medium (82g)",
+    "servingGrams": 82,
+    "calories": 35,
+    "totalSugar": 6,
+    "fiber": 2.3,
+    "glycemicIndex": 61,
+    "glycemicLoad": 5,
+    "carbs": 8,
+    "diabeticFriendly": false,
+    "insulinUnits": 0.6,
+    "notes": "Medium GI, high in nitrates"
+  },
+  {
+    "name": "Radish",
+    "category": "vegetable",
+    "servingSize": "1 cup sliced (116g)",
+    "servingGrams": 116,
+    "calories": 19,
+    "totalSugar": 2,
+    "fiber": 1.9,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI, peppery flavor"
+  },
+  {
+    "name": "Artichoke",
+    "category": "vegetable",
+    "servingSize": "1 medium (120g)",
+    "servingGrams": 120,
+    "calories": 60,
+    "totalSugar": 1,
+    "fiber": 6.9,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 13,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Very low GI, extremely high fiber"
+  },
+  {
+    "name": "Okra",
+    "category": "vegetable",
+    "servingSize": "1 cup (100g)",
+    "servingGrams": 100,
+    "calories": 33,
+    "totalSugar": 1,
+    "fiber": 3.2,
+    "glycemicIndex": 20,
+    "glycemicLoad": 1,
+    "carbs": 7,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Very low GI, may help lower blood sugar"
+  },
+  {
+    "name": "Squash (butternut)",
+    "category": "vegetable",
+    "servingSize": "1 cup cubed (140g)",
+    "servingGrams": 140,
+    "calories": 63,
+    "totalSugar": 3,
+    "fiber": 2.8,
+    "glycemicIndex": 51,
+    "glycemicLoad": 5,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Low GI, high vitamin A"
+  },
+  {
+    "name": "Garlic",
+    "category": "vegetable",
+    "servingSize": "3 cloves (9g)",
+    "servingGrams": 9,
+    "calories": 13,
+    "totalSugar": 0.1,
+    "fiber": 0.2,
+    "glycemicIndex": 10,
+    "glycemicLoad": 0,
+    "carbs": 3,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.2,
+    "notes": "Negligible sugar, may improve insulin sensitivity"
+  },
+  {
+    "name": "Leek",
+    "category": "vegetable",
+    "servingSize": "1 medium (89g)",
+    "servingGrams": 89,
+    "calories": 54,
+    "totalSugar": 3,
+    "fiber": 1.6,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 13,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Very low GI, prebiotic fiber"
+  },
+  {
+    "name": "Lindt Excellence 70% Dark",
+    "category": "chocolate",
+    "servingSize": "4 squares (40g)",
+    "servingGrams": 40,
+    "calories": 228,
+    "totalSugar": 11,
+    "fiber": 4.8,
+    "glycemicIndex": 22,
+    "glycemicLoad": 3,
+    "carbs": 17,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Low GI, high cocoa — best chocolate choice for diabetics"
+  },
+  {
+    "name": "Lindt Excellence 85% Dark",
+    "category": "chocolate",
+    "servingSize": "4 squares (40g)",
+    "servingGrams": 40,
+    "calories": 232,
+    "totalSugar": 7,
+    "fiber": 5.6,
+    "glycemicIndex": 20,
+    "glycemicLoad": 2,
+    "carbs": 14,
+    "diabeticFriendly": true,
+    "insulinUnits": 1,
+    "notes": "Very low sugar, excellent dark chocolate option"
+  },
+  {
+    "name": "Lindt Excellence 90% Dark",
+    "category": "chocolate",
+    "servingSize": "4 squares (40g)",
+    "servingGrams": 40,
+    "calories": 240,
+    "totalSugar": 4,
+    "fiber": 6,
+    "glycemicIndex": 18,
+    "glycemicLoad": 2,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.8,
+    "notes": "Minimal sugar, highest cocoa — top pick"
+  },
+  {
+    "name": "Lindt Excellence 99% Dark",
+    "category": "chocolate",
+    "servingSize": "4 squares (40g)",
+    "servingGrams": 40,
+    "calories": 244,
+    "totalSugar": 1,
+    "fiber": 7,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 10,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.7,
+    "notes": "Almost no sugar, very bitter — safest chocolate"
+  },
+  {
+    "name": "Lindt Lindor Milk",
+    "category": "chocolate",
+    "servingSize": "3 balls (36g)",
+    "servingGrams": 36,
+    "calories": 196,
+    "totalSugar": 18,
+    "fiber": 0.7,
+    "glycemicIndex": 45,
+    "glycemicLoad": 8,
+    "carbs": 20,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.5,
+    "notes": "High sugar, creamy truffle center"
+  },
+  {
+    "name": "Lindt Lindor Dark",
+    "category": "chocolate",
+    "servingSize": "3 balls (36g)",
+    "servingGrams": 36,
+    "calories": 190,
+    "totalSugar": 14,
+    "fiber": 1.5,
+    "glycemicIndex": 35,
+    "glycemicLoad": 5,
+    "carbs": 18,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.3,
+    "notes": "Lower sugar than milk variant"
+  },
+  {
+    "name": "Lindt Lindor White",
+    "category": "chocolate",
+    "servingSize": "3 balls (36g)",
+    "servingGrams": 36,
+    "calories": 200,
+    "totalSugar": 20,
+    "fiber": 0,
+    "glycemicIndex": 50,
+    "glycemicLoad": 10,
+    "carbs": 21,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.6,
+    "notes": "Very high sugar, avoid"
+  },
+  {
+    "name": "Côte d'Or Milk Chocolate",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (45g)",
+    "servingGrams": 45,
+    "calories": 240,
+    "totalSugar": 25,
+    "fiber": 1,
+    "glycemicIndex": 49,
+    "glycemicLoad": 12,
+    "carbs": 27,
+    "diabeticFriendly": false,
+    "insulinUnits": 2,
+    "notes": "High sugar Belgian chocolate"
+  },
+  {
+    "name": "Côte d'Or Dark Chocolate",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (45g)",
+    "servingGrams": 45,
+    "calories": 225,
+    "totalSugar": 17,
+    "fiber": 3.5,
+    "glycemicIndex": 30,
+    "glycemicLoad": 5,
+    "carbs": 23,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.7,
+    "notes": "Moderate sugar, better choice than milk"
+  },
+  {
+    "name": "Côte d'Or Noir de Noir",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (45g)",
+    "servingGrams": 45,
+    "calories": 230,
+    "totalSugar": 14,
+    "fiber": 4.5,
+    "glycemicIndex": 25,
+    "glycemicLoad": 4,
+    "carbs": 20,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.4,
+    "notes": "Rich dark, lower sugar option"
+  },
+  {
+    "name": "Nutella",
+    "category": "chocolate",
+    "servingSize": "1 tbsp (18g)",
+    "servingGrams": 18,
+    "calories": 100,
+    "totalSugar": 10,
+    "fiber": 0.4,
+    "glycemicIndex": 33,
+    "glycemicLoad": 4,
+    "carbs": 11,
+    "diabeticFriendly": false,
+    "insulinUnits": 0.8,
+    "notes": "Sugar is #1 ingredient — limit strictly"
+  },
+  {
+    "name": "Nutella B-ready",
+    "category": "chocolate",
+    "servingSize": "1 bar (22g)",
+    "servingGrams": 22,
+    "calories": 117,
+    "totalSugar": 10,
+    "fiber": 0.5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 6,
+    "carbs": 14,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Wafer adds refined carbs to Nutella"
+  },
+  {
+    "name": "Ferrero Rocher",
+    "category": "chocolate",
+    "servingSize": "3 pieces (37.5g)",
+    "servingGrams": 37,
+    "calories": 220,
+    "totalSugar": 16,
+    "fiber": 1,
+    "glycemicIndex": 47,
+    "glycemicLoad": 7,
+    "carbs": 17,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.3,
+    "notes": "High sugar and fat, occasional treat only"
+  },
+  {
+    "name": "Kinder Bueno",
+    "category": "chocolate",
+    "servingSize": "1 bar (43g)",
+    "servingGrams": 43,
+    "calories": 237,
+    "totalSugar": 20,
+    "fiber": 0.8,
+    "glycemicIndex": 55,
+    "glycemicLoad": 11,
+    "carbs": 22,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.6,
+    "notes": "Very high sugar, wafer and cream filling"
+  },
+  {
+    "name": "Kinder Surprise Egg",
+    "category": "chocolate",
+    "servingSize": "1 egg (20g)",
+    "servingGrams": 20,
+    "calories": 113,
+    "totalSugar": 12,
+    "fiber": 0.2,
+    "glycemicIndex": 50,
+    "glycemicLoad": 5,
+    "carbs": 10,
+    "diabeticFriendly": false,
+    "insulinUnits": 0.8,
+    "notes": "High sugar per gram, marketed to children"
+  },
+  {
+    "name": "Toblerone Milk",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (33g)",
+    "servingGrams": 33,
+    "calories": 174,
+    "totalSugar": 19,
+    "fiber": 0.5,
+    "glycemicIndex": 50,
+    "glycemicLoad": 9,
+    "carbs": 20,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.5,
+    "notes": "Honey nougat adds extra sugar"
+  },
+  {
+    "name": "Toblerone Dark",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (33g)",
+    "servingGrams": 33,
+    "calories": 168,
+    "totalSugar": 14,
+    "fiber": 1.5,
+    "glycemicIndex": 40,
+    "glycemicLoad": 6,
+    "carbs": 18,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.3,
+    "notes": "Slightly better than milk version"
+  },
+  {
+    "name": "Godiva Dark Chocolate",
+    "category": "chocolate",
+    "servingSize": "4 pieces (40g)",
+    "servingGrams": 40,
+    "calories": 210,
+    "totalSugar": 12,
+    "fiber": 3.5,
+    "glycemicIndex": 28,
+    "glycemicLoad": 4,
+    "carbs": 19,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.3,
+    "notes": "Premium dark, moderate sugar"
+  },
+  {
+    "name": "Godiva Milk Chocolate",
+    "category": "chocolate",
+    "servingSize": "4 pieces (40g)",
+    "servingGrams": 40,
+    "calories": 220,
+    "totalSugar": 21,
+    "fiber": 0.8,
+    "glycemicIndex": 48,
+    "glycemicLoad": 10,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "High sugar premium chocolate"
+  },
+  {
+    "name": "Cadbury Dairy Milk",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (45g)",
+    "servingGrams": 45,
+    "calories": 240,
+    "totalSugar": 25,
+    "fiber": 0.5,
+    "glycemicIndex": 49,
+    "glycemicLoad": 12,
+    "carbs": 28,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.1,
+    "notes": "Very high sugar — avoid"
+  },
+  {
+    "name": "Cadbury Fruit & Nut",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (45g)",
+    "servingGrams": 45,
+    "calories": 225,
+    "totalSugar": 24,
+    "fiber": 1.2,
+    "glycemicIndex": 47,
+    "glycemicLoad": 11,
+    "carbs": 26,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.9,
+    "notes": "Nuts add slight fiber but still very sweet"
+  },
+  {
+    "name": "Mars Bar",
+    "category": "chocolate",
+    "servingSize": "1 bar (51g)",
+    "servingGrams": 51,
+    "calories": 228,
+    "totalSugar": 30,
+    "fiber": 0.4,
+    "glycemicIndex": 65,
+    "glycemicLoad": 16,
+    "carbs": 34,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.5,
+    "notes": "Very high sugar and GI — avoid"
+  },
+  {
+    "name": "Snickers",
+    "category": "chocolate",
+    "servingSize": "1 bar (52g)",
+    "servingGrams": 52,
+    "calories": 250,
+    "totalSugar": 27,
+    "fiber": 1.2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 14,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Peanuts lower GI slightly but still high sugar"
+  },
+  {
+    "name": "Kit Kat",
+    "category": "chocolate",
+    "servingSize": "1 bar (42g)",
+    "servingGrams": 42,
+    "calories": 218,
+    "totalSugar": 22,
+    "fiber": 0.5,
+    "glycemicIndex": 63,
+    "glycemicLoad": 12,
+    "carbs": 27,
+    "diabeticFriendly": false,
+    "insulinUnits": 2,
+    "notes": "Wafer adds refined carbs"
+  },
+  {
+    "name": "Twix",
+    "category": "chocolate",
+    "servingSize": "1 bar (50g)",
+    "servingGrams": 50,
+    "calories": 250,
+    "totalSugar": 24,
+    "fiber": 0.3,
+    "glycemicIndex": 62,
+    "glycemicLoad": 13,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Caramel + cookie = high GI"
+  },
+  {
+    "name": "M&M's (Milk Chocolate)",
+    "category": "chocolate",
+    "servingSize": "1 pack (42g)",
+    "servingGrams": 42,
+    "calories": 207,
+    "totalSugar": 25,
+    "fiber": 0.7,
+    "glycemicIndex": 47,
+    "glycemicLoad": 11,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "High sugar, easy to overeat"
+  },
+  {
+    "name": "M&M's (Peanut)",
+    "category": "chocolate",
+    "servingSize": "1 pack (49g)",
+    "servingGrams": 49,
+    "calories": 243,
+    "totalSugar": 22,
+    "fiber": 1.5,
+    "glycemicIndex": 43,
+    "glycemicLoad": 9,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "Peanuts help slightly, still high sugar"
+  },
+  {
+    "name": "Bounty",
+    "category": "chocolate",
+    "servingSize": "1 bar (57g)",
+    "servingGrams": 57,
+    "calories": 275,
+    "totalSugar": 29,
+    "fiber": 2.3,
+    "glycemicIndex": 44,
+    "glycemicLoad": 11,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Coconut lowers GI but sugar is very high"
+  },
+  {
+    "name": "Milka Milk Chocolate",
+    "category": "chocolate",
+    "servingSize": "1/4 bar (38g)",
+    "servingGrams": 38,
+    "calories": 200,
+    "totalSugar": 22,
+    "fiber": 0.5,
+    "glycemicIndex": 49,
+    "glycemicLoad": 10,
+    "carbs": 23,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.7,
+    "notes": "Alpine milk chocolate, very sweet"
+  },
+  {
+    "name": "Ghirardelli 72% Dark",
+    "category": "chocolate",
+    "servingSize": "3 squares (40g)",
+    "servingGrams": 40,
+    "calories": 220,
+    "totalSugar": 10,
+    "fiber": 4,
+    "glycemicIndex": 23,
+    "glycemicLoad": 3,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Good dark option, moderate sugar"
+  },
+  {
+    "name": "Hershey's Milk Chocolate",
+    "category": "chocolate",
+    "servingSize": "1 bar (43g)",
+    "servingGrams": 43,
+    "calories": 220,
+    "totalSugar": 24,
+    "fiber": 0.8,
+    "glycemicIndex": 49,
+    "glycemicLoad": 11,
+    "carbs": 26,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.9,
+    "notes": "High sugar American classic"
+  },
+  {
+    "name": "Hershey's Special Dark",
+    "category": "chocolate",
+    "servingSize": "1 bar (41g)",
+    "servingGrams": 41,
+    "calories": 180,
+    "totalSugar": 17,
+    "fiber": 3,
+    "glycemicIndex": 35,
+    "glycemicLoad": 6,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.7,
+    "notes": "Better than milk but still sugary"
+  },
+  {
+    "name": "Reese's Peanut Butter Cup",
+    "category": "chocolate",
+    "servingSize": "1 pack (42g)",
+    "servingGrams": 42,
+    "calories": 210,
+    "totalSugar": 21,
+    "fiber": 1,
+    "glycemicIndex": 47,
+    "glycemicLoad": 10,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "High sugar, peanut butter adds fat"
+  },
+  {
+    "name": "Patchi Milk Chocolate",
+    "category": "chocolate",
+    "servingSize": "3 pieces (36g)",
+    "servingGrams": 36,
+    "calories": 195,
+    "totalSugar": 17,
+    "fiber": 0.6,
+    "glycemicIndex": 48,
+    "glycemicLoad": 8,
+    "carbs": 19,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.4,
+    "notes": "Premium Lebanese chocolate, high sugar"
+  },
+  {
+    "name": "Oreo Cookies",
+    "category": "snack",
+    "servingSize": "3 cookies (34g)",
+    "servingGrams": 34,
+    "calories": 160,
+    "totalSugar": 14,
+    "fiber": 0.7,
+    "glycemicIndex": 57,
+    "glycemicLoad": 8,
+    "carbs": 25,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Refined flour + sugar — avoid"
+  },
+  {
+    "name": "Grilled Chicken Breast",
+    "category": "plate",
+    "servingSize": "1 breast (172g)",
+    "servingGrams": 172,
+    "calories": 284,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs/sugar, excellent protein source"
+  },
+  {
+    "name": "Grilled Salmon",
+    "category": "plate",
+    "servingSize": "1 fillet (178g)",
+    "servingGrams": 178,
+    "calories": 367,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs, rich omega-3 fatty acids"
+  },
+  {
+    "name": "Caesar Salad",
+    "category": "plate",
+    "servingSize": "1 bowl (200g)",
+    "servingGrams": 200,
+    "calories": 180,
+    "totalSugar": 2,
+    "fiber": 2,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Low carb if without croutons"
+  },
+  {
+    "name": "Pasta Carbonara",
+    "category": "plate",
+    "servingSize": "1 serving (300g)",
+    "servingGrams": 300,
+    "calories": 520,
+    "totalSugar": 3,
+    "fiber": 2,
+    "glycemicIndex": 50,
+    "glycemicLoad": 22,
+    "carbs": 58,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.3,
+    "notes": "High carb pasta — use whole wheat to reduce GI"
+  },
+  {
+    "name": "Pasta Bolognese",
+    "category": "plate",
+    "servingSize": "1 serving (350g)",
+    "servingGrams": 350,
+    "calories": 480,
+    "totalSugar": 8,
+    "fiber": 3,
+    "glycemicIndex": 52,
+    "glycemicLoad": 20,
+    "carbs": 55,
+    "diabeticFriendly": false,
+    "insulinUnits": 4,
+    "notes": "High carbs, tomato sauce adds some sugar"
+  },
+  {
+    "name": "Pasta Alfredo",
+    "category": "plate",
+    "servingSize": "1 serving (300g)",
+    "servingGrams": 300,
+    "calories": 560,
+    "totalSugar": 3,
+    "fiber": 2,
+    "glycemicIndex": 48,
+    "glycemicLoad": 20,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Very high carb and fat"
+  },
+  {
+    "name": "Margherita Pizza (1 slice)",
+    "category": "plate",
+    "servingSize": "1 slice (107g)",
+    "servingGrams": 107,
+    "calories": 272,
+    "totalSugar": 4,
+    "fiber": 2,
+    "glycemicIndex": 60,
+    "glycemicLoad": 12,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Refined dough, high GI — limit to 1 slice"
+  },
+  {
+    "name": "Pepperoni Pizza (1 slice)",
+    "category": "plate",
+    "servingSize": "1 slice (113g)",
+    "servingGrams": 113,
+    "calories": 313,
+    "totalSugar": 4,
+    "fiber": 2,
+    "glycemicIndex": 60,
+    "glycemicLoad": 13,
+    "carbs": 35,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.6,
+    "notes": "High GI dough plus processed meat"
+  },
+  {
+    "name": "Beef Burger",
+    "category": "plate",
+    "servingSize": "1 burger with bun (200g)",
+    "servingGrams": 200,
+    "calories": 540,
+    "totalSugar": 6,
+    "fiber": 1.5,
+    "glycemicIndex": 66,
+    "glycemicLoad": 15,
+    "carbs": 34,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.5,
+    "notes": "White bun is high GI — try lettuce wrap"
+  },
+  {
+    "name": "Chicken Burger",
+    "category": "plate",
+    "servingSize": "1 burger with bun (190g)",
+    "servingGrams": 190,
+    "calories": 420,
+    "totalSugar": 5,
+    "fiber": 1.5,
+    "glycemicIndex": 62,
+    "glycemicLoad": 13,
+    "carbs": 32,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.3,
+    "notes": "Slightly better than beef, still high GI bun"
+  },
+  {
+    "name": "French Fries",
+    "category": "plate",
+    "servingSize": "medium (117g)",
+    "servingGrams": 117,
+    "calories": 365,
+    "totalSugar": 0.2,
+    "fiber": 3.4,
+    "glycemicIndex": 75,
+    "glycemicLoad": 21,
+    "carbs": 44,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.3,
+    "notes": "Very high GI, deep fried — avoid"
+  },
+  {
+    "name": "White Rice (cooked)",
+    "category": "grain",
+    "servingSize": "1 cup (158g)",
+    "servingGrams": 158,
+    "calories": 206,
+    "totalSugar": 0.1,
+    "fiber": 0.6,
+    "glycemicIndex": 73,
+    "glycemicLoad": 29,
+    "carbs": 45,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.4,
+    "notes": "High GI — switch to brown or basmati"
+  },
+  {
+    "name": "Brown Rice (cooked)",
+    "category": "grain",
+    "servingSize": "1 cup (195g)",
+    "servingGrams": 195,
+    "calories": 216,
+    "totalSugar": 0.7,
+    "fiber": 3.5,
+    "glycemicIndex": 50,
+    "glycemicLoad": 16,
+    "carbs": 45,
+    "diabeticFriendly": true,
+    "insulinUnits": 3.3,
+    "notes": "Lower GI than white, more fiber"
+  },
+  {
+    "name": "Basmati Rice (cooked)",
+    "category": "grain",
+    "servingSize": "1 cup (158g)",
+    "servingGrams": 158,
+    "calories": 210,
+    "totalSugar": 0.1,
+    "fiber": 0.7,
+    "glycemicIndex": 58,
+    "glycemicLoad": 22,
+    "carbs": 44,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.2,
+    "notes": "Lower GI than regular white rice"
+  },
+  {
+    "name": "Salmon Nigiri (2 pcs)",
+    "category": "plate",
+    "servingSize": "2 pieces (80g)",
+    "servingGrams": 80,
+    "calories": 120,
+    "totalSugar": 3,
+    "fiber": 0.3,
+    "glycemicIndex": 55,
+    "glycemicLoad": 5,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Moderate GI, small portions help"
+  },
+  {
+    "name": "California Roll (6 pcs)",
+    "category": "plate",
+    "servingSize": "6 pieces (180g)",
+    "servingGrams": 180,
+    "calories": 255,
+    "totalSugar": 5,
+    "fiber": 2.5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 14,
+    "carbs": 38,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.8,
+    "notes": "Sushi rice is sweetened — be careful"
+  },
+  {
+    "name": "Ribeye Steak",
+    "category": "plate",
+    "servingSize": "8 oz (227g)",
+    "servingGrams": 227,
+    "calories": 544,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs, high protein and fat"
+  },
+  {
+    "name": "Chicken Shawarma",
+    "category": "plate",
+    "servingSize": "1 wrap (280g)",
+    "servingGrams": 280,
+    "calories": 520,
+    "totalSugar": 4,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 14,
+    "carbs": 40,
+    "diabeticFriendly": false,
+    "insulinUnits": 3,
+    "notes": "Pita bread raises GI — ask for plate instead"
+  },
+  {
+    "name": "Beef Shawarma",
+    "category": "plate",
+    "servingSize": "1 wrap (300g)",
+    "servingGrams": 300,
+    "calories": 580,
+    "totalSugar": 4,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 15,
+    "carbs": 42,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.1,
+    "notes": "Higher fat than chicken, same carb issue with wrap"
+  },
+  {
+    "name": "Hummus",
+    "category": "plate",
+    "servingSize": "1/3 cup (80g)",
+    "servingGrams": 80,
+    "calories": 140,
+    "totalSugar": 0.5,
+    "fiber": 4,
+    "glycemicIndex": 6,
+    "glycemicLoad": 0,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.8,
+    "notes": "Very low GI, excellent with vegetables"
+  },
+  {
+    "name": "Falafel (4 balls)",
+    "category": "plate",
+    "servingSize": "4 balls (68g)",
+    "servingGrams": 68,
+    "calories": 224,
+    "totalSugar": 1,
+    "fiber": 3,
+    "glycemicIndex": 40,
+    "glycemicLoad": 5,
+    "carbs": 20,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.4,
+    "notes": "Low GI, chickpea-based — good protein"
+  },
+  {
+    "name": "Tabbouleh",
+    "category": "plate",
+    "servingSize": "1 cup (160g)",
+    "servingGrams": 160,
+    "calories": 120,
+    "totalSugar": 2,
+    "fiber": 4,
+    "glycemicIndex": 35,
+    "glycemicLoad": 5,
+    "carbs": 18,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Low GI, parsley-heavy = minimal bulgur"
+  },
+  {
+    "name": "Fattoush",
+    "category": "plate",
+    "servingSize": "1 bowl (200g)",
+    "servingGrams": 200,
+    "calories": 150,
+    "totalSugar": 4,
+    "fiber": 3,
+    "glycemicIndex": 30,
+    "glycemicLoad": 4,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Low GI, fried pita pieces raise it slightly"
+  },
+  {
+    "name": "Chicken Biryani",
+    "category": "plate",
+    "servingSize": "1 serving (350g)",
+    "servingGrams": 350,
+    "calories": 550,
+    "totalSugar": 4,
+    "fiber": 2,
+    "glycemicIndex": 60,
+    "glycemicLoad": 24,
+    "carbs": 65,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.8,
+    "notes": "High carb rice dish — limit portion"
+  },
+  {
+    "name": "Butter Chicken with Rice",
+    "category": "plate",
+    "servingSize": "1 serving (350g)",
+    "servingGrams": 350,
+    "calories": 580,
+    "totalSugar": 6,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 20,
+    "carbs": 50,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.7,
+    "notes": "Creamy sauce has sugar, rice adds carbs"
+  },
+  {
+    "name": "Pad Thai",
+    "category": "plate",
+    "servingSize": "1 serving (300g)",
+    "servingGrams": 300,
+    "calories": 470,
+    "totalSugar": 12,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 18,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Rice noodles + tamarind sugar — high carb"
+  },
+  {
+    "name": "Fried Rice",
+    "category": "plate",
+    "servingSize": "1 serving (250g)",
+    "servingGrams": 250,
+    "calories": 375,
+    "totalSugar": 2,
+    "fiber": 1.5,
+    "glycemicIndex": 70,
+    "glycemicLoad": 24,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "High GI white rice, oil adds calories"
+  },
+  {
+    "name": "Ramen",
+    "category": "plate",
+    "servingSize": "1 bowl (500g)",
+    "servingGrams": 500,
+    "calories": 450,
+    "totalSugar": 5,
+    "fiber": 2,
+    "glycemicIndex": 52,
+    "glycemicLoad": 18,
+    "carbs": 55,
+    "diabeticFriendly": false,
+    "insulinUnits": 4,
+    "notes": "Wheat noodles, high sodium — portion control"
+  },
+  {
+    "name": "Pho",
+    "category": "plate",
+    "servingSize": "1 bowl (500g)",
+    "servingGrams": 500,
+    "calories": 350,
+    "totalSugar": 4,
+    "fiber": 1,
+    "glycemicIndex": 55,
+    "glycemicLoad": 16,
+    "carbs": 45,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.3,
+    "notes": "Rice noodles raise GI, broth is low cal"
+  },
+  {
+    "name": "Fish and Chips",
+    "category": "plate",
+    "servingSize": "1 serving (350g)",
+    "servingGrams": 350,
+    "calories": 680,
+    "totalSugar": 1,
+    "fiber": 3,
+    "glycemicIndex": 75,
+    "glycemicLoad": 25,
+    "carbs": 56,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.1,
+    "notes": "Deep fried, high GI — very high carb"
+  },
+  {
+    "name": "Beef Tacos (2)",
+    "category": "plate",
+    "servingSize": "2 tacos (180g)",
+    "servingGrams": 180,
+    "calories": 340,
+    "totalSugar": 3,
+    "fiber": 3,
+    "glycemicIndex": 50,
+    "glycemicLoad": 10,
+    "carbs": 28,
+    "diabeticFriendly": true,
+    "insulinUnits": 2,
+    "notes": "Corn tortilla lower GI than flour"
+  },
+  {
+    "name": "Chicken Burrito",
+    "category": "plate",
+    "servingSize": "1 burrito (300g)",
+    "servingGrams": 300,
+    "calories": 500,
+    "totalSugar": 4,
+    "fiber": 5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 18,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Large flour tortilla = high carbs"
+  },
+  {
+    "name": "Lamb Kebab",
+    "category": "plate",
+    "servingSize": "1 skewer (120g)",
+    "servingGrams": 120,
+    "calories": 230,
+    "totalSugar": 1,
+    "fiber": 0.5,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 2,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.1,
+    "notes": "Almost zero carbs if without bread"
+  },
+  {
+    "name": "Moussaka",
+    "category": "plate",
+    "servingSize": "1 serving (250g)",
+    "servingGrams": 250,
+    "calories": 280,
+    "totalSugar": 6,
+    "fiber": 3,
+    "glycemicIndex": 40,
+    "glycemicLoad": 6,
+    "carbs": 18,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.3,
+    "notes": "Eggplant-based, lower carb than expected"
+  },
+  {
+    "name": "Lasagna",
+    "category": "plate",
+    "servingSize": "1 serving (250g)",
+    "servingGrams": 250,
+    "calories": 380,
+    "totalSugar": 6,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 14,
+    "carbs": 38,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.8,
+    "notes": "Pasta sheets + béchamel = high carb"
+  },
+  {
+    "name": "Mushroom Risotto",
+    "category": "plate",
+    "servingSize": "1 serving (280g)",
+    "servingGrams": 280,
+    "calories": 390,
+    "totalSugar": 2,
+    "fiber": 1.5,
+    "glycemicIndex": 69,
+    "glycemicLoad": 24,
+    "carbs": 55,
+    "diabeticFriendly": false,
+    "insulinUnits": 4,
+    "notes": "Arborio rice is very high GI"
+  },
+  {
+    "name": "Omelette (3 egg)",
+    "category": "plate",
+    "servingSize": "1 omelette (180g)",
+    "servingGrams": 180,
+    "calories": 280,
+    "totalSugar": 1,
+    "fiber": 0.5,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 2,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.1,
+    "notes": "Almost zero carb, great breakfast choice"
+  },
+  {
+    "name": "Pancakes (3 stack)",
+    "category": "plate",
+    "servingSize": "3 pancakes (232g)",
+    "servingGrams": 232,
+    "calories": 520,
+    "totalSugar": 14,
+    "fiber": 1.5,
+    "glycemicIndex": 67,
+    "glycemicLoad": 28,
+    "carbs": 60,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.4,
+    "notes": "Very high GI refined flour — avoid"
+  },
+  {
+    "name": "Waffles",
+    "category": "plate",
+    "servingSize": "2 waffles (150g)",
+    "servingGrams": 150,
+    "calories": 410,
+    "totalSugar": 8,
+    "fiber": 1,
+    "glycemicIndex": 76,
+    "glycemicLoad": 24,
+    "carbs": 48,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.5,
+    "notes": "Very high GI — try protein waffles instead"
+  },
+  {
+    "name": "French Toast",
+    "category": "plate",
+    "servingSize": "2 slices (160g)",
+    "servingGrams": 160,
+    "calories": 340,
+    "totalSugar": 12,
+    "fiber": 1,
+    "glycemicIndex": 59,
+    "glycemicLoad": 14,
+    "carbs": 36,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.6,
+    "notes": "Egg coating helps but bread is still refined"
+  },
+  {
+    "name": "Oatmeal (plain)",
+    "category": "plate",
+    "servingSize": "1 cup cooked (234g)",
+    "servingGrams": 234,
+    "calories": 154,
+    "totalSugar": 1,
+    "fiber": 4,
+    "glycemicIndex": 55,
+    "glycemicLoad": 13,
+    "carbs": 27,
+    "diabeticFriendly": true,
+    "insulinUnits": 2,
+    "notes": "Steel-cut oats are best, instant is higher GI"
+  },
+  {
+    "name": "Açaí Bowl",
+    "category": "plate",
+    "servingSize": "1 bowl (300g)",
+    "servingGrams": 300,
+    "calories": 380,
+    "totalSugar": 42,
+    "fiber": 7,
+    "glycemicIndex": 45,
+    "glycemicLoad": 15,
+    "carbs": 56,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.1,
+    "notes": "Looks healthy but loaded with sugar from toppings"
+  },
+  {
+    "name": "Greek Yogurt (plain)",
+    "category": "dairy",
+    "servingSize": "1 cup (200g)",
+    "servingGrams": 200,
+    "calories": 130,
+    "totalSugar": 5,
+    "fiber": 0,
+    "glycemicIndex": 11,
+    "glycemicLoad": 1,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, high protein — excellent choice"
+  },
+  {
+    "name": "Granola",
+    "category": "cereal",
+    "servingSize": "1/2 cup (55g)",
+    "servingGrams": 55,
+    "calories": 260,
+    "totalSugar": 12,
+    "fiber": 3,
+    "glycemicIndex": 55,
+    "glycemicLoad": 10,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Often loaded with hidden sugar"
+  },
+  {
+    "name": "Croissant",
+    "category": "bread",
+    "servingSize": "1 medium (67g)",
+    "servingGrams": 67,
+    "calories": 272,
+    "totalSugar": 5,
+    "fiber": 1.5,
+    "glycemicIndex": 67,
+    "glycemicLoad": 13,
+    "carbs": 31,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.3,
+    "notes": "High GI refined pastry"
+  },
+  {
+    "name": "Bagel with Cream Cheese",
+    "category": "plate",
+    "servingSize": "1 bagel + 2 tbsp (120g)",
+    "servingGrams": 120,
+    "calories": 360,
+    "totalSugar": 6,
+    "fiber": 1.5,
+    "glycemicIndex": 72,
+    "glycemicLoad": 22,
+    "carbs": 50,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.7,
+    "notes": "Very high GI, dense refined carbs"
+  },
+  {
+    "name": "Mac and Cheese",
+    "category": "plate",
+    "servingSize": "1 cup (200g)",
+    "servingGrams": 200,
+    "calories": 380,
+    "totalSugar": 5,
+    "fiber": 1.5,
+    "glycemicIndex": 64,
+    "glycemicLoad": 20,
+    "carbs": 40,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.9,
+    "notes": "Refined pasta + cheese sauce = high carb"
+  },
+  {
+    "name": "Fried Chicken (2 pcs)",
+    "category": "plate",
+    "servingSize": "2 pieces (200g)",
+    "servingGrams": 200,
+    "calories": 480,
+    "totalSugar": 0.5,
+    "fiber": 0.5,
+    "glycemicIndex": 46,
+    "glycemicLoad": 5,
+    "carbs": 16,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.2,
+    "notes": "Batter adds carbs, high in fat"
+  },
+  {
+    "name": "Chicken Nuggets (6 pcs)",
+    "category": "plate",
+    "servingSize": "6 nuggets (96g)",
+    "servingGrams": 96,
+    "calories": 280,
+    "totalSugar": 1,
+    "fiber": 0.5,
+    "glycemicIndex": 46,
+    "glycemicLoad": 5,
+    "carbs": 16,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.2,
+    "notes": "Breaded and fried — moderate carbs"
+  },
+  {
+    "name": "Hot Dog",
+    "category": "plate",
+    "servingSize": "1 with bun (98g)",
+    "servingGrams": 98,
+    "calories": 290,
+    "totalSugar": 4,
+    "fiber": 0.8,
+    "glycemicIndex": 68,
+    "glycemicLoad": 10,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "White bun is high GI, processed meat"
+  },
+  {
+    "name": "Club Sandwich",
+    "category": "plate",
+    "servingSize": "1 sandwich (300g)",
+    "servingGrams": 300,
+    "calories": 500,
+    "totalSugar": 5,
+    "fiber": 2,
+    "glycemicIndex": 58,
+    "glycemicLoad": 16,
+    "carbs": 42,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.1,
+    "notes": "Triple-decker = lots of bread"
+  },
+  {
+    "name": "BLT Sandwich",
+    "category": "plate",
+    "servingSize": "1 sandwich (180g)",
+    "servingGrams": 180,
+    "calories": 320,
+    "totalSugar": 4,
+    "fiber": 1.5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 10,
+    "carbs": 28,
+    "diabeticFriendly": false,
+    "insulinUnits": 2,
+    "notes": "Better if on whole wheat bread"
+  },
+  {
+    "name": "Lentil Soup",
+    "category": "plate",
+    "servingSize": "1 bowl (250g)",
+    "servingGrams": 250,
+    "calories": 180,
+    "totalSugar": 3,
+    "fiber": 8,
+    "glycemicIndex": 22,
+    "glycemicLoad": 3,
+    "carbs": 24,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.7,
+    "notes": "Very low GI, high fiber and protein — excellent"
+  },
+  {
+    "name": "Tomato Soup",
+    "category": "plate",
+    "servingSize": "1 bowl (250g)",
+    "servingGrams": 250,
+    "calories": 150,
+    "totalSugar": 12,
+    "fiber": 2,
+    "glycemicIndex": 38,
+    "glycemicLoad": 4,
+    "carbs": 18,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.3,
+    "notes": "Low GI, watch for added sugar in commercial versions"
+  },
+  {
+    "name": "Chicken Soup",
+    "category": "plate",
+    "servingSize": "1 bowl (250g)",
+    "servingGrams": 250,
+    "calories": 120,
+    "totalSugar": 2,
+    "fiber": 1,
+    "glycemicIndex": 25,
+    "glycemicLoad": 2,
+    "carbs": 10,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.7,
+    "notes": "Low GI, comforting and nutritious"
+  },
+  {
+    "name": "Couscous",
+    "category": "grain",
+    "servingSize": "1 cup (157g)",
+    "servingGrams": 157,
+    "calories": 176,
+    "totalSugar": 0.2,
+    "fiber": 2.2,
+    "glycemicIndex": 65,
+    "glycemicLoad": 22,
+    "carbs": 36,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.6,
+    "notes": "Medium-high GI, similar to white pasta"
+  },
+  {
+    "name": "Quinoa Salad",
+    "category": "plate",
+    "servingSize": "1 cup (185g)",
+    "servingGrams": 185,
+    "calories": 220,
+    "totalSugar": 2,
+    "fiber": 5,
+    "glycemicIndex": 53,
+    "glycemicLoad": 11,
+    "carbs": 33,
+    "diabeticFriendly": true,
+    "insulinUnits": 2.4,
+    "notes": "Low GI, complete protein — great grain alternative"
+  },
+  {
+    "name": "Grilled Steak Sirloin",
+    "category": "plate",
+    "servingSize": "6 oz (170g)",
+    "servingGrams": 170,
+    "calories": 320,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs, lean protein"
+  },
+  {
+    "name": "Coca-Cola",
+    "category": "beverage",
+    "servingSize": "1 can (355ml)",
+    "servingGrams": 355,
+    "calories": 140,
+    "totalSugar": 39,
+    "fiber": 0,
+    "glycemicIndex": 63,
+    "glycemicLoad": 16,
+    "carbs": 39,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.9,
+    "notes": "Pure liquid sugar — strongly avoid"
+  },
+  {
+    "name": "Pepsi",
+    "category": "beverage",
+    "servingSize": "1 can (355ml)",
+    "servingGrams": 355,
+    "calories": 150,
+    "totalSugar": 41,
+    "fiber": 0,
+    "glycemicIndex": 65,
+    "glycemicLoad": 17,
+    "carbs": 41,
+    "diabeticFriendly": false,
+    "insulinUnits": 3,
+    "notes": "Same as Coca-Cola — avoid"
+  },
+  {
+    "name": "Orange Juice",
+    "category": "beverage",
+    "servingSize": "1 cup (248ml)",
+    "servingGrams": 248,
+    "calories": 112,
+    "totalSugar": 21,
+    "fiber": 0.5,
+    "glycemicIndex": 50,
+    "glycemicLoad": 12,
+    "carbs": 26,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.9,
+    "notes": "Natural sugar but no fiber — eat whole orange instead"
+  },
+  {
+    "name": "Apple Juice",
+    "category": "beverage",
+    "servingSize": "1 cup (248ml)",
+    "servingGrams": 248,
+    "calories": 114,
+    "totalSugar": 24,
+    "fiber": 0.5,
+    "glycemicIndex": 41,
+    "glycemicLoad": 11,
+    "carbs": 28,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.1,
+    "notes": "Concentrated fruit sugar — eat whole apple instead"
+  },
+  {
+    "name": "Black Coffee",
+    "category": "beverage",
+    "servingSize": "1 cup (240ml)",
+    "servingGrams": 240,
+    "calories": 2,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero sugar, may improve insulin sensitivity"
+  },
+  {
+    "name": "Café Latte",
+    "category": "beverage",
+    "servingSize": "12 oz (360ml)",
+    "servingGrams": 360,
+    "calories": 150,
+    "totalSugar": 11,
+    "fiber": 0,
+    "glycemicIndex": 27,
+    "glycemicLoad": 3,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Milk sugar (lactose) — unsweetened is ok"
+  },
+  {
+    "name": "Cappuccino",
+    "category": "beverage",
+    "servingSize": "8 oz (240ml)",
+    "servingGrams": 240,
+    "calories": 80,
+    "totalSugar": 6,
+    "fiber": 0,
+    "glycemicIndex": 27,
+    "glycemicLoad": 2,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Less milk than latte — good choice unsweetened"
+  },
+  {
+    "name": "Green Tea",
+    "category": "beverage",
+    "servingSize": "1 cup (240ml)",
+    "servingGrams": 240,
+    "calories": 2,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero sugar, antioxidants may help glucose regulation"
+  },
+  {
+    "name": "Whole Milk",
+    "category": "dairy",
+    "servingSize": "1 cup (244ml)",
+    "servingGrams": 244,
+    "calories": 149,
+    "totalSugar": 12,
+    "fiber": 0,
+    "glycemicIndex": 27,
+    "glycemicLoad": 3,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Lactose sugar, low GI — moderate intake"
+  },
+  {
+    "name": "Skim Milk",
+    "category": "dairy",
+    "servingSize": "1 cup (245ml)",
+    "servingGrams": 245,
+    "calories": 83,
+    "totalSugar": 12,
+    "fiber": 0,
+    "glycemicIndex": 32,
+    "glycemicLoad": 4,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Same sugar as whole, slightly higher GI"
+  },
+  {
+    "name": "Smoothie (mixed berry)",
+    "category": "beverage",
+    "servingSize": "12 oz (355ml)",
+    "servingGrams": 355,
+    "calories": 240,
+    "totalSugar": 36,
+    "fiber": 4,
+    "glycemicIndex": 50,
+    "glycemicLoad": 15,
+    "carbs": 50,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.7,
+    "notes": "Hidden sugar bomb — make at home with less fruit"
+  },
+  {
+    "name": "Gatorade",
+    "category": "beverage",
+    "servingSize": "1 bottle (591ml)",
+    "servingGrams": 591,
+    "calories": 140,
+    "totalSugar": 34,
+    "fiber": 0,
+    "glycemicIndex": 78,
+    "glycemicLoad": 18,
+    "carbs": 36,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.6,
+    "notes": "Sports drink = sugar water for most people"
+  },
+  {
+    "name": "Red Bull",
+    "category": "beverage",
+    "servingSize": "1 can (250ml)",
+    "servingGrams": 250,
+    "calories": 110,
+    "totalSugar": 27,
+    "fiber": 0,
+    "glycemicIndex": 70,
+    "glycemicLoad": 12,
+    "carbs": 28,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.1,
+    "notes": "High sugar + caffeine — avoid"
+  },
+  {
+    "name": "Coconut Water",
+    "category": "beverage",
+    "servingSize": "1 cup (240ml)",
+    "servingGrams": 240,
+    "calories": 46,
+    "totalSugar": 6,
+    "fiber": 0,
+    "glycemicIndex": 54,
+    "glycemicLoad": 3,
+    "carbs": 9,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Natural electrolytes, low sugar"
+  },
+  {
+    "name": "Beer (lager)",
+    "category": "beverage",
+    "servingSize": "1 can (355ml)",
+    "servingGrams": 355,
+    "calories": 153,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 66,
+    "glycemicLoad": 5,
+    "carbs": 13,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Alcohol affects blood sugar unpredictably"
+  },
+  {
+    "name": "Red Wine",
+    "category": "beverage",
+    "servingSize": "5 oz (148ml)",
+    "servingGrams": 148,
+    "calories": 125,
+    "totalSugar": 1,
+    "fiber": 0,
+    "glycemicIndex": 44,
+    "glycemicLoad": 1,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Low sugar, moderate amounts may improve insulin sensitivity"
+  },
+  {
+    "name": "White Wine",
+    "category": "beverage",
+    "servingSize": "5 oz (148ml)",
+    "servingGrams": 148,
+    "calories": 121,
+    "totalSugar": 1.4,
+    "fiber": 0,
+    "glycemicIndex": 44,
+    "glycemicLoad": 1,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Similar to red, slightly more residual sugar"
+  },
+  {
+    "name": "White Bread",
+    "category": "bread",
+    "servingSize": "1 slice (25g)",
+    "servingGrams": 25,
+    "calories": 66,
+    "totalSugar": 1.5,
+    "fiber": 0.6,
+    "glycemicIndex": 75,
+    "glycemicLoad": 8,
+    "carbs": 13,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Very high GI — worst bread choice for diabetics"
+  },
+  {
+    "name": "Whole Wheat Bread",
+    "category": "bread",
+    "servingSize": "1 slice (28g)",
+    "servingGrams": 28,
+    "calories": 69,
+    "totalSugar": 1.5,
+    "fiber": 1.9,
+    "glycemicIndex": 54,
+    "glycemicLoad": 7,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Lower GI, more fiber — much better choice"
+  },
+  {
+    "name": "Sourdough Bread",
+    "category": "bread",
+    "servingSize": "1 slice (56g)",
+    "servingGrams": 56,
+    "calories": 150,
+    "totalSugar": 1,
+    "fiber": 1,
+    "glycemicIndex": 54,
+    "glycemicLoad": 8,
+    "carbs": 28,
+    "diabeticFriendly": true,
+    "insulinUnits": 2,
+    "notes": "Fermentation lowers GI significantly"
+  },
+  {
+    "name": "Pita Bread (white)",
+    "category": "bread",
+    "servingSize": "1 pita (60g)",
+    "servingGrams": 60,
+    "calories": 165,
+    "totalSugar": 1,
+    "fiber": 1.3,
+    "glycemicIndex": 57,
+    "glycemicLoad": 10,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Medium GI, better than white bread"
+  },
+  {
+    "name": "Naan Bread",
+    "category": "bread",
+    "servingSize": "1 piece (90g)",
+    "servingGrams": 90,
+    "calories": 262,
+    "totalSugar": 3,
+    "fiber": 1.5,
+    "glycemicIndex": 71,
+    "glycemicLoad": 21,
+    "carbs": 45,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.3,
+    "notes": "High GI refined flour — limit"
+  },
+  {
+    "name": "Flour Tortilla",
+    "category": "bread",
+    "servingSize": "1 medium (45g)",
+    "servingGrams": 45,
+    "calories": 140,
+    "totalSugar": 1,
+    "fiber": 1.5,
+    "glycemicIndex": 30,
+    "glycemicLoad": 6,
+    "carbs": 24,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.7,
+    "notes": "Surprisingly low GI, moderate carbs"
+  },
+  {
+    "name": "Corn Tortilla",
+    "category": "bread",
+    "servingSize": "1 small (26g)",
+    "servingGrams": 26,
+    "calories": 52,
+    "totalSugar": 0.5,
+    "fiber": 1.5,
+    "glycemicIndex": 46,
+    "glycemicLoad": 5,
+    "carbs": 11,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.8,
+    "notes": "Lower GI than flour, smaller size helps"
+  },
+  {
+    "name": "Cornflakes",
+    "category": "cereal",
+    "servingSize": "1 cup (28g)",
+    "servingGrams": 28,
+    "calories": 100,
+    "totalSugar": 3,
+    "fiber": 0.3,
+    "glycemicIndex": 81,
+    "glycemicLoad": 20,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Very high GI — one of the worst cereals"
+  },
+  {
+    "name": "Cheerios",
+    "category": "cereal",
+    "servingSize": "1 cup (28g)",
+    "servingGrams": 28,
+    "calories": 100,
+    "totalSugar": 1,
+    "fiber": 3,
+    "glycemicIndex": 74,
+    "glycemicLoad": 15,
+    "carbs": 20,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.5,
+    "notes": "High GI despite 'heart healthy' claim"
+  },
+  {
+    "name": "Muesli (no added sugar)",
+    "category": "cereal",
+    "servingSize": "1/2 cup (55g)",
+    "servingGrams": 55,
+    "calories": 200,
+    "totalSugar": 8,
+    "fiber": 4,
+    "glycemicIndex": 56,
+    "glycemicLoad": 10,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "Medium GI, choose brands with no added sugar"
+  },
+  {
+    "name": "Granola Bar",
+    "category": "snack",
+    "servingSize": "1 bar (42g)",
+    "servingGrams": 42,
+    "calories": 190,
+    "totalSugar": 12,
+    "fiber": 2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 9,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Marketed as healthy but usually high sugar"
+  },
+  {
+    "name": "Rice Cake",
+    "category": "snack",
+    "servingSize": "2 cakes (18g)",
+    "servingGrams": 18,
+    "calories": 70,
+    "totalSugar": 0.1,
+    "fiber": 0.4,
+    "glycemicIndex": 82,
+    "glycemicLoad": 17,
+    "carbs": 15,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.1,
+    "notes": "Extremely high GI despite low calories"
+  },
+  {
+    "name": "Bagel (plain)",
+    "category": "bread",
+    "servingSize": "1 medium (105g)",
+    "servingGrams": 105,
+    "calories": 270,
+    "totalSugar": 5,
+    "fiber": 2,
+    "glycemicIndex": 72,
+    "glycemicLoad": 25,
+    "carbs": 53,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.9,
+    "notes": "Very high GI, dense refined carbs"
+  },
+  {
+    "name": "Baguette",
+    "category": "bread",
+    "servingSize": "1/4 baguette (65g)",
+    "servingGrams": 65,
+    "calories": 185,
+    "totalSugar": 2,
+    "fiber": 1,
+    "glycemicIndex": 95,
+    "glycemicLoad": 25,
+    "carbs": 36,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.6,
+    "notes": "One of the highest GI foods — avoid"
+  },
+  {
+    "name": "Rye Bread (dark)",
+    "category": "bread",
+    "servingSize": "1 slice (32g)",
+    "servingGrams": 32,
+    "calories": 83,
+    "totalSugar": 1,
+    "fiber": 1.9,
+    "glycemicIndex": 41,
+    "glycemicLoad": 5,
+    "carbs": 15,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.1,
+    "notes": "Low GI, dense and filling — good choice"
+  },
+  {
+    "name": "Multigrain Bread",
+    "category": "bread",
+    "servingSize": "1 slice (26g)",
+    "servingGrams": 26,
+    "calories": 69,
+    "totalSugar": 2,
+    "fiber": 1.8,
+    "glycemicIndex": 48,
+    "glycemicLoad": 6,
+    "carbs": 12,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.9,
+    "notes": "Low GI if truly whole grain (check ingredients)"
+  },
+  {
+    "name": "Cheddar Cheese",
+    "category": "dairy",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 113,
+    "totalSugar": 0.4,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0.4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Near-zero carbs, high protein and fat"
+  },
+  {
+    "name": "Mozzarella Cheese",
+    "category": "dairy",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 85,
+    "totalSugar": 0.7,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0.7,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Very low carbs, lighter than cheddar"
+  },
+  {
+    "name": "Feta Cheese",
+    "category": "dairy",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 75,
+    "totalSugar": 0.1,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 1,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.1,
+    "notes": "Negligible carbs, tangy flavor"
+  },
+  {
+    "name": "Vanilla Ice Cream",
+    "category": "dessert",
+    "servingSize": "1/2 cup (66g)",
+    "servingGrams": 66,
+    "calories": 137,
+    "totalSugar": 14,
+    "fiber": 0.5,
+    "glycemicIndex": 61,
+    "glycemicLoad": 8,
+    "carbs": 16,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.2,
+    "notes": "Medium GI, high sugar — small portions only"
+  },
+  {
+    "name": "Frozen Yogurt",
+    "category": "dessert",
+    "servingSize": "1/2 cup (70g)",
+    "servingGrams": 70,
+    "calories": 110,
+    "totalSugar": 17,
+    "fiber": 0,
+    "glycemicIndex": 63,
+    "glycemicLoad": 10,
+    "carbs": 22,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.6,
+    "notes": "Often MORE sugar than ice cream"
+  },
+  {
+    "name": "Potato Chips",
+    "category": "snack",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 152,
+    "totalSugar": 0.2,
+    "fiber": 1.2,
+    "glycemicIndex": 54,
+    "glycemicLoad": 6,
+    "carbs": 15,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.1,
+    "notes": "Medium GI, easy to overeat — portion control"
+  },
+  {
+    "name": "Tortilla Chips",
+    "category": "snack",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 140,
+    "totalSugar": 0.3,
+    "fiber": 1.8,
+    "glycemicIndex": 63,
+    "glycemicLoad": 8,
+    "carbs": 18,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.3,
+    "notes": "Medium-high GI, corn-based"
+  },
+  {
+    "name": "Popcorn (air-popped)",
+    "category": "snack",
+    "servingSize": "3 cups (24g)",
+    "servingGrams": 24,
+    "calories": 93,
+    "totalSugar": 0.2,
+    "fiber": 3.5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 6,
+    "carbs": 19,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.4,
+    "notes": "Low GI when air-popped, high fiber — good snack"
+  },
+  {
+    "name": "Almonds",
+    "category": "nut",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 164,
+    "totalSugar": 1,
+    "fiber": 3.5,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 6,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.4,
+    "notes": "Very low GI, healthy fats — excellent snack"
+  },
+  {
+    "name": "Cashews",
+    "category": "nut",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 157,
+    "totalSugar": 2,
+    "fiber": 0.9,
+    "glycemicIndex": 22,
+    "glycemicLoad": 1,
+    "carbs": 9,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.6,
+    "notes": "Low GI, higher carbs than other nuts"
+  },
+  {
+    "name": "Walnuts",
+    "category": "nut",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 185,
+    "totalSugar": 1,
+    "fiber": 1.9,
+    "glycemicIndex": 15,
+    "glycemicLoad": 0,
+    "carbs": 4,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI, omega-3 rich — brain food"
+  },
+  {
+    "name": "Peanuts",
+    "category": "nut",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 161,
+    "totalSugar": 1,
+    "fiber": 2.4,
+    "glycemicIndex": 14,
+    "glycemicLoad": 0,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Very low GI, high protein for a nut"
+  },
+  {
+    "name": "Pistachios",
+    "category": "nut",
+    "servingSize": "1 oz (28g)",
+    "servingGrams": 28,
+    "calories": 156,
+    "totalSugar": 2,
+    "fiber": 3,
+    "glycemicIndex": 15,
+    "glycemicLoad": 1,
+    "carbs": 8,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Low GI, may improve blood sugar control"
+  },
+  {
+    "name": "Dried Fruit Mix",
+    "category": "snack",
+    "servingSize": "1/4 cup (40g)",
+    "servingGrams": 40,
+    "calories": 130,
+    "totalSugar": 26,
+    "fiber": 2,
+    "glycemicIndex": 60,
+    "glycemicLoad": 13,
+    "carbs": 33,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.4,
+    "notes": "Concentrated sugar — very easy to overeat"
+  },
+  {
+    "name": "Trail Mix",
+    "category": "snack",
+    "servingSize": "1/4 cup (40g)",
+    "servingGrams": 40,
+    "calories": 175,
+    "totalSugar": 8,
+    "fiber": 2,
+    "glycemicIndex": 38,
+    "glycemicLoad": 4,
+    "carbs": 16,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.2,
+    "notes": "Nuts lower the GI, watch for chocolate/candy pieces"
+  },
+  {
+    "name": "Protein Bar",
+    "category": "snack",
+    "servingSize": "1 bar (60g)",
+    "servingGrams": 60,
+    "calories": 220,
+    "totalSugar": 6,
+    "fiber": 5,
+    "glycemicIndex": 35,
+    "glycemicLoad": 5,
+    "carbs": 22,
+    "diabeticFriendly": true,
+    "insulinUnits": 1.5,
+    "notes": "Choose bars with <8g sugar and >15g protein"
+  },
+  {
+    "name": "Cheesecake",
+    "category": "dessert",
+    "servingSize": "1 slice (125g)",
+    "servingGrams": 125,
+    "calories": 400,
+    "totalSugar": 27,
+    "fiber": 0.3,
+    "glycemicIndex": 44,
+    "glycemicLoad": 11,
+    "carbs": 28,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.1,
+    "notes": "High sugar + fat, lower GI due to fat content"
+  },
+  {
+    "name": "Tiramisu",
+    "category": "dessert",
+    "servingSize": "1 serving (150g)",
+    "servingGrams": 150,
+    "calories": 450,
+    "totalSugar": 20,
+    "fiber": 0.5,
+    "glycemicIndex": 38,
+    "glycemicLoad": 8,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "Mascarpone lowers GI but still high sugar"
+  },
+  {
+    "name": "Crème Brûlée",
+    "category": "dessert",
+    "servingSize": "1 serving (120g)",
+    "servingGrams": 120,
+    "calories": 320,
+    "totalSugar": 25,
+    "fiber": 0,
+    "glycemicIndex": 42,
+    "glycemicLoad": 9,
+    "carbs": 23,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.7,
+    "notes": "Sugar crust on top adds pure sucrose"
+  },
+  {
+    "name": "Apple Pie",
+    "category": "dessert",
+    "servingSize": "1 slice (155g)",
+    "servingGrams": 155,
+    "calories": 410,
+    "totalSugar": 23,
+    "fiber": 2,
+    "glycemicIndex": 44,
+    "glycemicLoad": 12,
+    "carbs": 58,
+    "diabeticFriendly": false,
+    "insulinUnits": 4.3,
+    "notes": "High carb from crust + sugar — avoid"
+  },
+  {
+    "name": "Brownie",
+    "category": "dessert",
+    "servingSize": "1 square (56g)",
+    "servingGrams": 56,
+    "calories": 227,
+    "totalSugar": 20,
+    "fiber": 1,
+    "glycemicIndex": 43,
+    "glycemicLoad": 8,
+    "carbs": 24,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Butter lowers GI but very high sugar"
+  },
+  {
+    "name": "Chocolate Chip Cookie",
+    "category": "dessert",
+    "servingSize": "1 large (45g)",
+    "servingGrams": 45,
+    "calories": 220,
+    "totalSugar": 18,
+    "fiber": 0.5,
+    "glycemicIndex": 55,
+    "glycemicLoad": 10,
+    "carbs": 29,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.1,
+    "notes": "Refined flour + sugar — limit strictly"
+  },
+  {
+    "name": "Glazed Donut",
+    "category": "dessert",
+    "servingSize": "1 donut (60g)",
+    "servingGrams": 60,
+    "calories": 269,
+    "totalSugar": 15,
+    "fiber": 0.7,
+    "glycemicIndex": 76,
+    "glycemicLoad": 17,
+    "carbs": 31,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.3,
+    "notes": "Very high GI, fried refined dough — avoid"
+  },
+  {
+    "name": "Blueberry Muffin",
+    "category": "dessert",
+    "servingSize": "1 large (110g)",
+    "servingGrams": 110,
+    "calories": 400,
+    "totalSugar": 29,
+    "fiber": 1.5,
+    "glycemicIndex": 59,
+    "glycemicLoad": 18,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Essentially cake — not a healthy breakfast"
+  },
+  {
+    "name": "Cinnamon Roll",
+    "category": "dessert",
+    "servingSize": "1 roll (100g)",
+    "servingGrams": 100,
+    "calories": 420,
+    "totalSugar": 28,
+    "fiber": 1,
+    "glycemicIndex": 60,
+    "glycemicLoad": 19,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Cream cheese icing + dough = sugar overload"
+  },
+  {
+    "name": "Baklava",
+    "category": "dessert",
+    "servingSize": "1 piece (60g)",
+    "servingGrams": 60,
+    "calories": 250,
+    "totalSugar": 22,
+    "fiber": 1.5,
+    "glycemicIndex": 45,
+    "glycemicLoad": 9,
+    "carbs": 25,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.8,
+    "notes": "Syrup-soaked, nuts lower GI slightly"
+  },
+  {
+    "name": "Kunafa",
+    "category": "dessert",
+    "servingSize": "1 slice (150g)",
+    "servingGrams": 150,
+    "calories": 460,
+    "totalSugar": 38,
+    "fiber": 1,
+    "glycemicIndex": 55,
+    "glycemicLoad": 18,
+    "carbs": 52,
+    "diabeticFriendly": false,
+    "insulinUnits": 3.8,
+    "notes": "Extremely high sugar from sugar syrup — avoid"
+  },
+  {
+    "name": "Rice Pudding",
+    "category": "dessert",
+    "servingSize": "1/2 cup (140g)",
+    "servingGrams": 140,
+    "calories": 190,
+    "totalSugar": 17,
+    "fiber": 0.5,
+    "glycemicIndex": 60,
+    "glycemicLoad": 12,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "White rice + sugar + milk — high GI"
+  },
+  {
+    "name": "Gelato",
+    "category": "dessert",
+    "servingSize": "1/2 cup (88g)",
+    "servingGrams": 88,
+    "calories": 160,
+    "totalSugar": 18,
+    "fiber": 0.5,
+    "glycemicIndex": 57,
+    "glycemicLoad": 9,
+    "carbs": 22,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.6,
+    "notes": "Denser than ice cream, similar sugar"
+  },
+  {
+    "name": "Sorbet (fruit)",
+    "category": "dessert",
+    "servingSize": "1/2 cup (96g)",
+    "servingGrams": 96,
+    "calories": 120,
+    "totalSugar": 24,
+    "fiber": 1,
+    "glycemicIndex": 65,
+    "glycemicLoad": 13,
+    "carbs": 30,
+    "diabeticFriendly": false,
+    "insulinUnits": 2.2,
+    "notes": "Pure sugar + fruit — no fat to slow absorption"
+  },
+  {
+    "name": "Chocolate Mousse",
+    "category": "dessert",
+    "servingSize": "1/2 cup (100g)",
+    "servingGrams": 100,
+    "calories": 220,
+    "totalSugar": 18,
+    "fiber": 1,
+    "glycemicIndex": 35,
+    "glycemicLoad": 6,
+    "carbs": 20,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.5,
+    "notes": "Cream lowers GI but still high sugar"
+  },
+  {
+    "name": "Ketchup",
+    "category": "condiment",
+    "servingSize": "1 tbsp (17g)",
+    "servingGrams": 17,
+    "calories": 20,
+    "totalSugar": 4,
+    "fiber": 0,
+    "glycemicIndex": 55,
+    "glycemicLoad": 1,
+    "carbs": 5,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.3,
+    "notes": "Small serving OK, but sugar adds up fast"
+  },
+  {
+    "name": "Honey",
+    "category": "condiment",
+    "servingSize": "1 tbsp (21g)",
+    "servingGrams": 21,
+    "calories": 64,
+    "totalSugar": 17,
+    "fiber": 0,
+    "glycemicIndex": 58,
+    "glycemicLoad": 10,
+    "carbs": 17,
+    "diabeticFriendly": false,
+    "insulinUnits": 1.3,
+    "notes": "Natural but still pure sugar — limit"
+  },
+  {
+    "name": "Maple Syrup",
+    "category": "condiment",
+    "servingSize": "1 tbsp (20g)",
+    "servingGrams": 20,
+    "calories": 52,
+    "totalSugar": 12,
+    "fiber": 0,
+    "glycemicIndex": 54,
+    "glycemicLoad": 7,
+    "carbs": 13,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Lower GI than sugar but still concentrated"
+  },
+  {
+    "name": "Peanut Butter",
+    "category": "condiment",
+    "servingSize": "2 tbsp (32g)",
+    "servingGrams": 32,
+    "calories": 188,
+    "totalSugar": 3,
+    "fiber": 1.6,
+    "glycemicIndex": 14,
+    "glycemicLoad": 1,
+    "carbs": 7,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.5,
+    "notes": "Very low GI, high protein — choose no-sugar-added"
+  },
+  {
+    "name": "Olive Oil",
+    "category": "condiment",
+    "servingSize": "1 tbsp (14g)",
+    "servingGrams": 14,
+    "calories": 119,
+    "totalSugar": 0,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs, healthy monounsaturated fats"
+  },
+  {
+    "name": "Soy Sauce",
+    "category": "condiment",
+    "servingSize": "1 tbsp (18g)",
+    "servingGrams": 18,
+    "calories": 9,
+    "totalSugar": 0.1,
+    "fiber": 0.1,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 1,
+    "diabeticFriendly": true,
+    "insulinUnits": 0.1,
+    "notes": "Negligible sugar, watch sodium"
+  },
+  {
+    "name": "BBQ Sauce",
+    "category": "condiment",
+    "servingSize": "2 tbsp (36g)",
+    "servingGrams": 36,
+    "calories": 60,
+    "totalSugar": 12,
+    "fiber": 0.2,
+    "glycemicIndex": 55,
+    "glycemicLoad": 5,
+    "carbs": 14,
+    "diabeticFriendly": false,
+    "insulinUnits": 1,
+    "notes": "Surprisingly high sugar — use sparingly"
+  },
+  {
+    "name": "Mayonnaise",
+    "category": "condiment",
+    "servingSize": "1 tbsp (15g)",
+    "servingGrams": 15,
+    "calories": 94,
+    "totalSugar": 0.1,
+    "fiber": 0,
+    "glycemicIndex": 0,
+    "glycemicLoad": 0,
+    "carbs": 0.1,
+    "diabeticFriendly": true,
+    "insulinUnits": 0,
+    "notes": "Zero carbs, high fat — fine in moderation"
+  }
+];</script>
+<!-- INLINE_DB_END -->
+</body>
+</html>

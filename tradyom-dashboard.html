@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tradyom — Marketing Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06060b;--surface:rgba(255,255,255,0.035);--surface2:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.08);--text:#e8e8ed;--dim:rgba(255,255,255,0.5);--muted:rgba(255,255,255,0.25);--green:#10b981;--cyan:#22d3ee;--gold:#f59e0b;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--orange:#f97316;--pink:#ec4899;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 0%,rgba(16,185,129,0.05),transparent 60%),radial-gradient(ellipse at 70% 100%,rgba(34,211,238,0.04),transparent 60%);pointer-events:none;z-index:0;}
+.app{max-width:1400px;margin:0 auto;padding:20px;position:relative;z-index:1;}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.hdr h1{font-family:'Orbitron';font-size:20px;letter-spacing:2px;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr .sub{font-size:11px;color:var(--dim);margin-top:2px;}
+.tabs{display:flex;gap:3px;background:var(--surface);border-radius:8px;padding:3px;}
+.tab{padding:7px 18px;border:none;background:transparent;color:var(--dim);font-family:'Orbitron';font-size:11px;cursor:pointer;border-radius:6px;transition:all .2s;letter-spacing:1px;}
+.tab:hover{color:var(--text);} .tab.active{background:var(--green);color:#000;font-weight:600;}
+
+/* Section */
+.panel{display:none;}.panel.active{display:block;}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;}
+.sec-title{font-family:'Orbitron';font-size:12px;letter-spacing:1.5px;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* Toggle pills */
+.toggles{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.toggle-group{display:flex;align-items:center;gap:4px;margin-right:12px;}
+.toggle-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:2px;}
+.pill{padding:5px 12px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.pill:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
+.pill.on{border-color:var(--green);color:var(--green);background:rgba(16,185,129,0.1);}
+.pill.product{border-color:var(--gold);} .pill.product.on{border-color:var(--gold);color:var(--gold);background:rgba(245,158,11,0.1);}
+.pill.channel{border-color:var(--cyan);} .pill.channel.on{border-color:var(--cyan);color:var(--cyan);background:rgba(34,211,238,0.1);}
+
+/* ═══ FUNNEL CANVAS ═══ */
+.funnel-canvas{position:relative;overflow-x:auto;min-height:500px;}
+.funnel-svg{width:100%;min-width:1100px;}
+
+/* ═══ CHANNELS ═══ */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.ch-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .2s;}
+.ch-card:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);}
+.ch-card .ch-icon{font-size:26px;margin-bottom:6px;}
+.ch-card .ch-platform{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.ch-card .ch-user{font-family:'Orbitron';font-size:11px;color:var(--green);margin:3px 0 8px;display:block;text-decoration:none;}
+.ch-metrics{font-size:10px;color:var(--dim);text-align:left;}
+.ch-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.ch-row:last-child{border:none;} .ch-val{font-weight:600;color:var(--text);}
+.ch-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:4px;vertical-align:middle;}
+.dot-active{background:var(--green);}.dot-planned{background:var(--cyan);}
+
+/* ═══ KANBAN ═══ */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.k-col{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:10px;min-height:180px;}
+.k-col-hdr{font-family:'Orbitron';font-size:10px;letter-spacing:1px;text-align:center;padding:5px;margin-bottom:8px;border-radius:5px;}
+.k-col[data-s="todo"] .k-col-hdr{color:var(--gold);background:rgba(245,158,11,0.08);}
+.k-col[data-s="inp"] .k-col-hdr{color:var(--cyan);background:rgba(34,211,238,0.08);}
+.k-col[data-s="done"] .k-col-hdr{color:var(--green);background:rgba(16,185,129,0.08);}
+.k-list{min-height:60px;padding:3px;border-radius:5px;transition:background .2s;}
+.k-list.drag-over{background:rgba(255,255,255,0.04);}
+.k-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-left:3px solid var(--cyan);padding:8px 10px;margin-bottom:6px;border-radius:5px;font-size:11px;cursor:grab;transition:transform .15s;}
+.k-card:hover{transform:translateY(-1px);} .k-card.dragging{opacity:0.4;}
+
+@media(max-width:768px){.kanban{grid-template-columns:1fr;}}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="hdr">
+    <div><h1>📈 Tradyom</h1><div class="sub">Marketing Command Center</div></div>
+    <div class="tabs">
+        <button class="tab active" data-tab="english" onclick="switchTab('english')">🇬🇧 English</button>
+        <button class="tab" data-tab="arabic" onclick="switchTab('arabic')">🇸🇦 Arabic</button>
+    </div>
+</div>
+
+<div class="panel active" id="p-english">
+    <div class="sec">
+        <div class="sec-title">🎯 Funnels & Retargeting</div>
+        <div class="toggles" id="toggles-english"></div>
+        <div class="funnel-canvas" id="fc-english"></div>
+    </div>
+    <div class="sec"><div class="sec-title">📱 Channels</div><div class="ch-grid" id="ch-english"></div></div>
+    <div class="sec"><div class="sec-title">📋 Tasks</div><div class="kanban" id="kb-english"></div></div>
+</div>
+
+<div class="panel" id="p-arabic">
+    <div class="sec">
+        <div class="sec-title">🎯 Funnels & Retargeting</div>
+        <div class="toggles" id="toggles-arabic"></div>
+        <div class="funnel-canvas" id="fc-arabic"></div>
+    </div>
+    <div class="sec"><div class="sec-title">📱 Channels</div><div class="ch-grid" id="ch-arabic"></div></div>
+    <div class="sec"><div class="sec-title">📋 Tasks</div><div class="kanban" id="kb-arabic"></div></div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const D = {
+english: {
+    channels: [
+        {id:'ig',name:"Instagram",icon:"📸",user:"@0xakylles",link:"https://instagram.com/0xakylles",followers:"125K",engage:"3.5%",posts:"5/wk",status:"active"},
+        {id:'tw',name:"Twitter/X",icon:"𝕏",user:"@0xakylles",link:"https://twitter.com/0xakylles",followers:"80K",engage:"2.1%",posts:"10/wk",status:"active"},
+        {id:'yt',name:"YouTube",icon:"▶️",user:"@0xakylles",link:"https://youtube.com/@0xakylles",followers:"45K",engage:"4.8%",posts:"1/wk",status:"active"},
+        {id:'fb',name:"Facebook",icon:"📘",user:"0xakylles",link:"https://facebook.com/0xakylles",followers:"60K",engage:"1.9%",posts:"3/wk",status:"active"},
+        {id:'rd',name:"Reddit",icon:"🔴",user:"u/0xakylles",link:"https://reddit.com/user/0xakylles",followers:"15K",engage:"7.2%",posts:"2/wk",status:"active"},
+        {id:'li',name:"LinkedIn",icon:"💼",user:"0xakylles",link:"https://linkedin.com/in/0xakylles",followers:"30K",engage:"1.5%",posts:"1/wk",status:"active"},
+        {id:'sc',name:"Snapchat",icon:"👻",user:"@0xakylles",link:"https://snapchat.com/add/0xakylles",followers:"20K",engage:"5.0%",posts:"4/wk",status:"planned"}
+    ],
+    products: [
+        {id:'digest',name:"The Digest",icon:"📰",color:"#22d3ee",desc:"Weekly market newsletter"},
+        {id:'dragons-club',name:"Dragons Club",icon:"🐉",color:"#a855f7",desc:"Exclusive trading community"},
+        {id:'dragons-program',name:"Dragons Program",icon:"🔥",color:"#f97316",desc:"Full trading education program"},
+        {id:'consultation',name:"Consultation",icon:"🎯",color:"#10b981",desc:"1-on-1 advisory sessions"}
+    ],
+    // Per-product funnel definitions
+    funnels: {
+        'digest': {
+            awareness: [{ch:'ig',action:'Reels: "5 Things Moving Markets"'},{ch:'tw',action:'Thread: Weekly Preview'},{ch:'li',action:'Article: Market Insights'},{ch:'yt',action:'Shorts: Quick Takes'}],
+            engagement: [{type:'bio',label:'Link in Bio → Digest landing'},{type:'dm',label:'DM auto-reply with sample issue'},{type:'link',label:'Story swipe-up → free issue'}],
+            conversion: [{label:'Free trial signup'},{label:'Paid subscription $9/mo'}],
+            retargeting: [
+                {audience:'Visited landing, didn\'t subscribe',action:'Meta/Google retarget → free trial CTA',days:'1-7'},
+                {audience:'Opened free issue, no upgrade',action:'Email drip: "What you\'re missing" series',days:'3-14'},
+                {audience:'Engaged on Twitter threads',action:'Twitter Ads → digest landing',days:'1-30'},
+                {audience:'YouTube viewers (market content)',action:'YouTube retarget → lead magnet',days:'7-30'}
+            ]
+        },
+        'dragons-club': {
+            awareness: [{ch:'ig',action:'Reels: Behind the scenes, P&L screenshots'},{ch:'tw',action:'Live trade commentary threads'},{ch:'yt',action:'Video: "Day in the Dragons Room"'},{ch:'rd',action:'AMA posts, trade setups'}],
+            engagement: [{type:'bio',label:'Link in Bio → Club info page'},{type:'dm',label:'DM: "Send DRAGONS for free trial"'},{type:'link',label:'Post link → testimonials page'}],
+            conversion: [{label:'7-day free trial'},{label:'Monthly membership $49/mo'},{label:'Annual membership $399/yr'}],
+            retargeting: [
+                {audience:'Visited club page, no signup',action:'Meta retarget → member testimonials video',days:'1-7'},
+                {audience:'Free trial expired',action:'Email: limited-time annual discount',days:'1-3'},
+                {audience:'Engaged with trade content',action:'Instagram retarget → trial CTA',days:'3-14'},
+                {audience:'Digest subscribers',action:'Cross-sell email: "Level up to Dragons"',days:'30+'}
+            ]
+        },
+        'dragons-program': {
+            awareness: [{ch:'ig',action:'Carousel: "From $0 to Funded Trader"'},{ch:'yt',action:'Full video: "My Trading Journey" series'},{ch:'tw',action:'Thread: Program curriculum breakdown'},{ch:'fb',action:'Ad: Success stories compilation'}],
+            engagement: [{type:'bio',label:'Link in Bio → Program page'},{type:'dm',label:'DM: Send "PROGRAM" for curriculum PDF'},{type:'link',label:'Story → free masterclass registration'}],
+            conversion: [{label:'Free masterclass webinar'},{label:'Program enrollment $997'},{label:'Premium + mentorship $2,497'}],
+            retargeting: [
+                {audience:'Webinar attendees, no purchase',action:'Meta/Google: "Seats filling up" urgency ads',days:'1-3'},
+                {audience:'Viewed pricing page',action:'Email: payment plan option + bonus offer',days:'1-7'},
+                {audience:'Dragons Club members',action:'In-app banner + email: upgrade to Program',days:'ongoing'},
+                {audience:'YouTube series viewers (>50%)',action:'YouTube retarget → webinar signup',days:'7-14'},
+                {audience:'Abandoned checkout',action:'Email: limited bonus expires in 24h',days:'0-1'}
+            ]
+        },
+        'consultation': {
+            awareness: [{ch:'ig',action:'Reels: "Biggest mistakes I see traders make"'},{ch:'li',action:'Post: Professional trading advisory'},{ch:'tw',action:'Thread: Case study breakdown'},{ch:'yt',action:'Video: "When you need a trading mentor"'}],
+            engagement: [{type:'bio',label:'Link in Bio → Calendly booking'},{type:'dm',label:'DM: "Book a free 15-min call"'},{type:'link',label:'Story → booking page'}],
+            conversion: [{label:'Free 15-min discovery call'},{label:'Single session $199'},{label:'4-session package $699'}],
+            retargeting: [
+                {audience:'Booked discovery, no purchase',action:'Email: "Here\'s what we\'ll work on" + testimonial',days:'1-3'},
+                {audience:'Program graduates',action:'Email: "Continue your growth" + alumni discount',days:'30+'},
+                {audience:'High-engagement followers',action:'Instagram DM sequence',days:'ongoing'},
+                {audience:'Landing page visitors',action:'Meta retarget → free call CTA',days:'1-14'}
+            ]
+        }
+    },
+    tasks:[
+        {id:'en1',text:'Content calendar Q2',status:'todo'},{id:'en2',text:'Instagram Reels strategy',status:'todo'},
+        {id:'en3',text:'YouTube production pipeline',status:'inp'},{id:'en4',text:'Telegram growth campaign',status:'inp'},
+        {id:'en5',text:'Influencer outreach',status:'todo'},{id:'en6',text:'Ad creatives — paid',status:'inp'},
+        {id:'en7',text:'Email newsletter setup',status:'todo'},{id:'en8',text:'Landing page A/B tests',status:'done'},
+        {id:'en9',text:'Webinar promo strategy',status:'todo'},{id:'en10',text:'Community engagement',status:'inp'},
+        {id:'en11',text:'SEO content strategy',status:'done'},{id:'en12',text:'Analytics dashboard',status:'done'}
+    ]
+},
+arabic: {
+    channels: [
+        {id:'tk',name:"TikTok",icon:"🎵",user:"@ramyalame",link:"https://tiktok.com/@ramyalame",followers:"200K",engage:"6.1%",posts:"7/wk",status:"active"},
+        {id:'ig',name:"Instagram",icon:"📸",user:"@tradyom",link:"https://instagram.com/tradyom",followers:"150K",engage:"4.2%",posts:"4/wk",status:"active"},
+        {id:'fb',name:"Facebook",icon:"📘",user:"@tradyom",link:"https://facebook.com/tradyom",followers:"90K",engage:"2.5%",posts:"3/wk",status:"active"},
+        {id:'sc',name:"Snapchat",icon:"👻",user:"@tradyom",link:"https://snapchat.com/add/tradyom",followers:"70K",engage:"5.5%",posts:"5/wk",status:"active"},
+        {id:'yt',name:"YouTube",icon:"▶️",user:"@ramyalame",link:"https://youtube.com/@ramyalame",followers:"60K",engage:"3.9%",posts:"1/wk",status:"active"}
+    ],
+    products: [
+        {id:'trading-course',name:"Trading Course",icon:"📚",color:"#f59e0b",desc:"دورة التداول الشاملة"},
+        {id:'traders-club',name:"Traders Club",icon:"🏆",color:"#a855f7",desc:"نادي المتداولين"},
+        {id:'consultation-ar',name:"Consultation",icon:"🎯",color:"#10b981",desc:"استشارة فردية"}
+    ],
+    funnels: {
+        'trading-course': {
+            awareness: [{ch:'tk',action:'فيديوهات: "كيف تبدأ التداول من الصفر"'},{ch:'ig',action:'ريلز: نتائج طلاب + شرح مبسط'},{ch:'yt',action:'فيديو: "خارطة طريق المتداول المبتدئ"'},{ch:'fb',action:'إعلان: قصص نجاح الطلاب'}],
+            engagement: [{type:'bio',label:'رابط البايو → صفحة الدورة'},{type:'dm',label:'رد تلقائي: "ارسل كلمة دورة"'},{type:'link',label:'ستوري → تسجيل ويبنار مجاني'}],
+            conversion: [{label:'ويبنار مجاني (مقدمة)'},{label:'الدورة الأساسية $497'},{label:'الدورة + إرشاد شخصي $1,297'}],
+            retargeting: [
+                {audience:'حضروا الويبنار ولم يشتروا',action:'Meta إعلان: "الأماكن تنفد" + خصم محدود',days:'1-3'},
+                {audience:'زاروا صفحة الدورة',action:'إعلان إنستجرام: شهادات طلاب ناجحين',days:'1-7'},
+                {audience:'شاهدوا >50% من فيديوهات يوتيوب',action:'يوتيوب retarget → ويبنار',days:'7-14'},
+                {audience:'تفاعلوا على تيك توك',action:'TikTok retarget → صفحة هبوط',days:'3-14'},
+                {audience:'تركوا السلة',action:'إيميل: خطة دفع + بونس إضافي',days:'0-1'}
+            ]
+        },
+        'traders-club': {
+            awareness: [{ch:'tk',action:'فيديوهات: يوم في حياة متداول محترف'},{ch:'ig',action:'ريلز: صفقات لايف + P&L'},{ch:'yt',action:'فيديو: "جولة داخل نادي المتداولين"'},{ch:'sc',action:'ستوريز: كواليس النادي'}],
+            engagement: [{type:'bio',label:'رابط البايو → صفحة النادي'},{type:'dm',label:'رد: "ارسل نادي للتجربة المجانية"'},{type:'link',label:'بوست → صفحة الشهادات'}],
+            conversion: [{label:'تجربة مجانية 7 أيام'},{label:'اشتراك شهري $49'},{label:'اشتراك سنوي $399'}],
+            retargeting: [
+                {audience:'زاروا صفحة النادي',action:'Meta retarget → فيديو شهادات الأعضاء',days:'1-7'},
+                {audience:'انتهت التجربة المجانية',action:'إيميل: خصم على الاشتراك السنوي',days:'1-3'},
+                {audience:'طلاب الدورة',action:'Cross-sell: "الخطوة التالية" → النادي',days:'30+'},
+                {audience:'متابعين نشطين على سناب',action:'Snapchat Ads → تجربة مجانية',days:'3-14'}
+            ]
+        },
+        'consultation-ar': {
+            awareness: [{ch:'ig',action:'ريلز: "أكبر أخطاء المتداولين الجدد"'},{ch:'tk',action:'فيديو: "متى تحتاج مرشد تداول؟"'},{ch:'yt',action:'فيديو: دراسة حالة عميل'},{ch:'fb',action:'بوست: النتائج قبل وبعد'}],
+            engagement: [{type:'bio',label:'رابط البايو → صفحة الحجز'},{type:'dm',label:'رد: "احجز مكالمة مجانية 15 دقيقة"'},{type:'link',label:'ستوري → Calendly'}],
+            conversion: [{label:'مكالمة استكشافية مجانية'},{label:'جلسة واحدة $199'},{label:'باقة 4 جلسات $699'}],
+            retargeting: [
+                {audience:'حجزوا مكالمة ولم يشتروا',action:'إيميل: "هذا ما سنعمل عليه" + شهادة',days:'1-3'},
+                {audience:'خريجو الدورة',action:'إيميل: خصم خاص للخريجين',days:'30+'},
+                {audience:'زوار صفحة الحجز',action:'Meta retarget → مكالمة مجانية',days:'1-14'},
+                {audience:'أعضاء النادي النشطين',action:'DM sequence → استشارة مخصصة',days:'ongoing'}
+            ]
+        }
+    },
+    tasks:[
+        {id:'ar1',text:'تقويم المحتوى — الربع الثاني',status:'todo'},{id:'ar2',text:'استراتيجية ريلز',status:'todo'},
+        {id:'ar3',text:'إنتاج فيديوهات يوتيوب',status:'inp'},{id:'ar4',text:'حملة نمو تليجرام',status:'inp'},
+        {id:'ar5',text:'التواصل مع المؤثرين',status:'todo'},{id:'ar6',text:'تصميم إعلانات',status:'inp'},
+        {id:'ar7',text:'إعداد النشرة البريدية',status:'todo'},{id:'ar8',text:'تحسين الصفحات المقصودة',status:'done'},
+        {id:'ar9',text:'استراتيجية ترويج الندوات',status:'todo'},{id:'ar10',text:'خطة مشاركة المجتمع',status:'inp'},
+        {id:'ar11',text:'استراتيجية SEO',status:'done'},{id:'ar12',text:'لوحة التحليلات',status:'done'}
+    ]
+}
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const state = {
+    english: { products: new Set(['digest','dragons-club','dragons-program','consultation']), channels: new Set(['ig','tw','yt','fb','rd','li','sc']) },
+    arabic:  { products: new Set(['trading-course','traders-club','consultation-ar']), channels: new Set(['tk','ig','fb','sc','yt']) }
+};
+
+// ═══════════════════════════════════════
+// TAB
+// ═══════════════════════════════════════
+function switchTab(lang) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===lang));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('p-'+lang).classList.add('active');
+}
+document.addEventListener('keydown',e=>{if(e.key==='1')switchTab('english');if(e.key==='2')switchTab('arabic');});
+
+// ═══════════════════════════════════════
+// TOGGLES
+// ═══════════════════════════════════════
+function renderToggles(lang) {
+    const d = D[lang];
+    let h = '<div class="toggle-group"><span class="toggle-label">Products:</span>';
+    d.products.forEach(p => {
+        const on = state[lang].products.has(p.id);
+        h += `<button class="pill product ${on?'on':''}" data-id="${p.id}" onclick="toggleProduct('${lang}','${p.id}')" style="${on?'border-color:'+p.color+';color:'+p.color+';background:'+p.color+'18':''}">${p.icon} ${p.name}</button>`;
+    });
+    h += '</div><div class="toggle-group"><span class="toggle-label">Channels:</span>';
+    d.channels.forEach(c => {
+        const on = state[lang].channels.has(c.id);
+        h += `<button class="pill channel ${on?'on':''}" data-id="${c.id}" onclick="toggleChannel('${lang}','${c.id}')">${c.icon} ${c.name}</button>`;
+    });
+    h += '</div>';
+    document.getElementById('toggles-'+lang).innerHTML = h;
+}
+
+function toggleProduct(lang, id) {
+    const s = state[lang].products;
+    s.has(id) ? s.delete(id) : s.add(id);
+    renderToggles(lang); renderFunnel(lang);
+}
+function toggleChannel(lang, id) {
+    const s = state[lang].channels;
+    s.has(id) ? s.delete(id) : s.add(id);
+    renderToggles(lang); renderFunnel(lang);
+}
+
+// ═══════════════════════════════════════
+// FUNNEL RENDERER
+// ═══════════════════════════════════════
+function renderFunnel(lang) {
+    const d = D[lang];
+    const activeProd = [...state[lang].products];
+    const activeCh = state[lang].channels;
+    if (!activeProd.length) { document.getElementById('fc-'+lang).innerHTML='<div style="text-align:center;color:var(--muted);padding:40px">Select at least one product to view funnels</div>'; return; }
+
+    let html = '';
+    activeProd.forEach(pid => {
+        const prod = d.products.find(p=>p.id===pid);
+        const funnel = d.funnels[pid];
+        if (!prod || !funnel) return;
+
+        // Filter awareness by active channels
+        const awareness = funnel.awareness.filter(a => activeCh.has(a.ch));
+        const chMap = {};
+        d.channels.forEach(c => chMap[c.id] = c);
+
+        html += `<div style="margin-bottom:24px;border:1px solid ${prod.color}25;border-radius:10px;padding:16px;background:${prod.color}06">`;
+        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="font-size:20px">${prod.icon}</span>
+            <span style="font-family:Orbitron;font-size:13px;letter-spacing:1px;color:${prod.color}">${prod.name}</span>
+            <span style="font-size:10px;color:var(--dim);margin-left:4px">${prod.desc}</span>
+        </div>`;
+
+        // Funnel stages in horizontal flow
+        html += `<div style="display:flex;gap:0;overflow-x:auto;align-items:flex-start;min-width:1050px">`;
+
+        // COL 1: AWARENESS
+        html += `<div style="flex:1;min-width:220px">
+            <div style="font-family:Orbitron;font-size:10px;letter-spacing:1px;color:#10b981;text-align:center;padding:4px 10px;background:rgba(16,185,129,0.08);border-radius:10px;margin-bottom:8px">📢 AWARENESS</div>`;
+        if (awareness.length) {
+            awareness.forEach(a => {
+                const ch = chMap[a.ch];
+                html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-left:3px solid #10b981;border-radius:6px;margin-bottom:5px;font-size:11px">
+                    <span style="font-size:15px">${ch?ch.icon:'📱'}</span>
+                    <div><div style="font-weight:500">${ch?ch.name:a.ch}</div><div style="font-size:9px;color:var(--dim)">${a.action}</div></div>
+                </div>`;
+            });
+        } else {
+            html += `<div style="font-size:10px;color:var(--muted);text-align:center;padding:12px">No channels selected</div>`;
+        }
+        html += `</div>`;
+
+        // ARROW
+        html += `<div style="width:40px;display:flex;align-items:center;justify-content:center;padding-top:30px;flex-shrink:0">
+            <svg width="30" height="20" viewBox="0 0 30 20"><path d="M0,10 L22,10" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="none"/><polygon points="22,5 30,10 22,15" fill="rgba(255,255,255,0.2)"/></svg>
+        </div>`;
+
+        // COL 2: ENGAGEMENT
+        html += `<div style="flex:1;min-width:200px">
+            <div style="font-family:Orbitron;font-size:10px;letter-spacing:1px;color:#22d3ee;text-align:center;padding:4px 10px;background:rgba(34,211,238,0.08);border-radius:10px;margin-bottom:8px">💬 ENGAGEMENT</div>`;
+        funnel.engagement.forEach(e => {
+            const icons = {bio:'🔗',dm:'💬',link:'👆',email:'📩'};
+            html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-left:3px solid #22d3ee;border-radius:6px;margin-bottom:5px;font-size:11px">
+                <span style="font-size:15px">${icons[e.type]||'🎯'}</span>
+                <div style="font-size:10px">${e.label}</div>
+            </div>`;
+        });
+        html += `</div>`;
+
+        // ARROW
+        html += `<div style="width:40px;display:flex;align-items:center;justify-content:center;padding-top:30px;flex-shrink:0">
+            <svg width="30" height="20" viewBox="0 0 30 20"><path d="M0,10 L22,10" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="none"/><polygon points="22,5 30,10 22,15" fill="rgba(255,255,255,0.2)"/></svg>
+        </div>`;
+
+        // COL 3: CONVERSION
+        html += `<div style="flex:0.8;min-width:170px">
+            <div style="font-family:Orbitron;font-size:10px;letter-spacing:1px;color:${prod.color};text-align:center;padding:4px 10px;background:${prod.color}14;border-radius:10px;margin-bottom:8px">💰 CONVERSION</div>`;
+        funnel.conversion.forEach(c => {
+            html += `<div style="padding:7px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-left:3px solid ${prod.color};border-radius:6px;margin-bottom:5px;font-size:11px">
+                <div style="font-weight:500">${c.label}</div>
+            </div>`;
+        });
+        html += `</div>`;
+
+        // ARROW
+        html += `<div style="width:40px;display:flex;align-items:center;justify-content:center;padding-top:30px;flex-shrink:0">
+            <svg width="30" height="20" viewBox="0 0 30 20"><path d="M0,10 L22,10" stroke="rgba(239,68,68,0.3)" stroke-width="2" stroke-dasharray="4,3" fill="none"/><polygon points="22,5 30,10 22,15" fill="rgba(239,68,68,0.3)"/></svg>
+        </div>`;
+
+        // COL 4: RETARGETING
+        html += `<div style="flex:1.2;min-width:260px">
+            <div style="font-family:Orbitron;font-size:10px;letter-spacing:1px;color:#ef4444;text-align:center;padding:4px 10px;background:rgba(239,68,68,0.08);border-radius:10px;margin-bottom:8px">🔄 RETARGETING</div>`;
+        funnel.retargeting.forEach(r => {
+            html += `<div style="padding:7px 10px;background:rgba(239,68,68,0.03);border:1px solid rgba(239,68,68,0.08);border-left:3px solid #ef4444;border-radius:6px;margin-bottom:5px;font-size:10px">
+                <div style="font-weight:500;color:var(--text);margin-bottom:2px">${r.audience}</div>
+                <div style="color:var(--dim)">${r.action}</div>
+                <div style="color:var(--muted);font-size:9px;margin-top:2px">⏱ ${r.days} days</div>
+            </div>`;
+        });
+        html += `</div>`;
+
+        html += `</div>`; // end funnel row
+        html += `</div>`; // end product block
+    });
+
+    document.getElementById('fc-'+lang).innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// CHANNELS
+// ═══════════════════════════════════════
+function renderChannels(lang) {
+    document.getElementById('ch-'+lang).innerHTML = D[lang].channels.map(c => `
+        <div class="ch-card">
+            <div class="ch-icon">${c.icon}</div>
+            <div class="ch-platform">${c.name}</div>
+            <a href="${c.link}" target="_blank" class="ch-user">${c.user}</a>
+            <div class="ch-metrics">
+                <div class="ch-row"><span>Followers</span><span class="ch-val">${c.followers}</span></div>
+                <div class="ch-row"><span>Engage</span><span class="ch-val">${c.engage}</span></div>
+                <div class="ch-row"><span>Posts</span><span class="ch-val">${c.posts}</span></div>
+                <div class="ch-row"><span>Status</span><span>${c.status}<span class="ch-dot dot-${c.status}"></span></span></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ═══════════════════════════════════════
+// KANBAN
+// ═══════════════════════════════════════
+function loadTasks(l){const s=localStorage.getItem('ty-'+l);return s?JSON.parse(s):D[l].tasks;}
+function saveTasks(l,t){localStorage.setItem('ty-'+l,JSON.stringify(t));}
+function renderKanban(lang){
+    const tasks=loadTasks(lang);
+    const cols=[{s:'todo',l:'📌 TO DO'},{s:'inp',l:'⚡ IN PROGRESS'},{s:'done',l:'✅ DONE'}];
+    document.getElementById('kb-'+lang).innerHTML=cols.map(c=>`
+        <div class="k-col" data-s="${c.s}">
+            <div class="k-col-hdr">${c.l}</div>
+            <div class="k-list" data-lang="${lang}" data-status="${c.s}">
+                ${tasks.filter(t=>t.status===c.s).map(t=>`<div class="k-card" draggable="true" data-id="${t.id}">${t.text}</div>`).join('')}
+            </div>
+        </div>
+    `).join('');
+    bindDrag(lang);
+}
+function bindDrag(lang){
+    document.querySelectorAll(`#kb-${lang} .k-card`).forEach(c=>{
+        c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text',c.dataset.id);c.classList.add('dragging');});
+        c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+    });
+    document.querySelectorAll(`#kb-${lang} .k-list`).forEach(l=>{
+        l.addEventListener('dragover',e=>{e.preventDefault();l.classList.add('drag-over');});
+        l.addEventListener('dragleave',()=>l.classList.remove('drag-over'));
+        l.addEventListener('drop',e=>{
+            e.preventDefault();l.classList.remove('drag-over');
+            const id=e.dataTransfer.getData('text');
+            const el=document.querySelector(`#kb-${lang} .k-card[data-id="${id}"]`);
+            if(el){l.appendChild(el);let t=loadTasks(lang);const x=t.find(z=>z.id===id);if(x){x.status=l.dataset.status;saveTasks(lang,t);}}
+        });
+    });
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+['english','arabic'].forEach(l=>{renderToggles(l);renderFunnel(l);renderChannels(l);renderKanban(l);});
+</script>
+</body>
+</html>
