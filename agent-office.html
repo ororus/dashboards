@@ -797,6 +797,167 @@
             .dept-grid { grid-template-columns: 1fr; }
         }
 
+        /* ─── Mobile Specific Overrides (<= 768px) ─── */
+        @media (max-width: 768px) {
+            .app {
+                padding: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+            }
+            .header-right {
+                flex-direction: column;
+                align-items: center; /* Ensure items are centered when stacked */
+                gap: 8px;
+            }
+            .clock {
+                font-size: 1rem;
+            }
+            .status-pill {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr); /* 2 columns on tablet */
+            }
+            .stat-value {
+                font-size: 1.4rem; /* Smaller font for stat values */
+            }
+
+            .nav-tab {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+
+            .dept-grid {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Adjust minmax for tablets */
+            }
+
+            /* Home tab specific */
+            .home-card {
+                padding: 16px; /* Reduced padding for home cards */
+            }
+            .home-card-header {
+                font-size: 0.8rem;
+                margin-bottom: 10px;
+            }
+            .advisor-header {
+                font-size: 0.75rem;
+            }
+            .advisor-msg {
+                font-size: 0.75rem;
+            }
+            .goals-list {
+                gap: 8px;
+            }
+            .goal-item {
+                padding: 8px 10px;
+            }
+            .goal-num {
+                width: 20px;
+                height: 20px;
+                font-size: 0.65rem;
+            }
+            .goal-text {
+                font-size: 0.75rem;
+            }
+            .goal-input {
+                padding: 6px 10px;
+                font-size: 0.7rem;
+            }
+            .goal-add-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+
+            /* Earnings grid */
+            .earnings-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 columns for earnings on tablet */
+            }
+            .earnings-day {
+                padding: 8px;
+            }
+            .earnings-day-header {
+                margin-bottom: 6px;
+                padding-bottom: 4px;
+            }
+            .earnings-day-name {
+                font-size: 0.65rem;
+            }
+            .earnings-day-date {
+                font-size: 0.55rem;
+            }
+            .earnings-today-badge {
+                font-size: 0.5rem;
+                padding: 0 4px;
+            }
+            .earnings-count {
+                font-size: 0.55rem;
+                padding: 0 4px;
+            }
+            .earnings-row {
+                padding: 3px 0;
+            }
+            .earnings-logo, .earnings-logo-fallback {
+                width: 16px;
+                height: 16px;
+            }
+            .earnings-symbol {
+                font-size: 0.65rem;
+            }
+            .earnings-name, .earnings-time, .earnings-est, .earnings-eps {
+                font-size: 0.5rem;
+            }
+
+            /* Iframes */
+            iframe[src="org-chart.html"],
+            iframe[src="tasks.html"],
+            iframe[src="office-map.html"] {
+                height: calc(100vh - 180px); /* More height for iframes */
+            }
+
+            /* Task columns */
+            .tasks-columns {
+                grid-template-columns: 1fr; /* Stack task columns on tablet */
+            }
+
+            /* Drawer */
+            .agent-drawer {
+                width: 100%;
+                right: -100%;
+            }
+        }
+
+        /* ─── Phone Specific Overrides (<= 480px) ─── */
+        @media (max-width: 480px) {
+            .header-left h1 {
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+            }
+            .header-left .subtitle {
+                font-size: 0.7rem;
+            }
+            .stats-row {
+                grid-template-columns: 1fr; /* 1 column on phone */
+            }
+            .nav-tabs {
+                border-radius: var(--radius-sm);
+                padding: 2px;
+            }
+            .nav-tab {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+
+            .earnings-grid {
+                grid-template-columns: 1fr; /* 1 column for earnings on phone */
+            }
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
