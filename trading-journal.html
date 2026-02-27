@@ -416,10 +416,10 @@ function renderForm(){
     }
 
     // Tags
-    h+=`<div class="fg"><label>Tags</label><div class="tags-row">${TAGS.map(t=>`<button class="tag-btn ${addTags.has(t)?'sel':''}" onclick="addTags.has('${t}')?addTags.delete('${t}'):addTags.add('${t}');renderForm()">${t}</button>`).join('')}</div></div>`;
+    h+=`<div class="fg"><label>Tags</label><div class="tags-row">${TAGS.map(t=>`<button class="tag-btn ${addTags.has(t)?'sel':''}" onclick="toggleTag(this,'${t}')">${t}</button>`).join('')}</div></div>`;
 
     // Emotion & Rating
-    h+=`<div style="display:flex;gap:24px;margin-bottom:16px"><div class="fg" style="margin:0"><label>Emotion</label><div class="emo-row">${EMOTIONS.map(e=>`<button class="emo-btn ${addEmo===e?'sel':''}" onclick="addEmo='${e}';renderForm()">${e}</button>`).join('')}</div></div><div class="fg" style="margin:0"><label>Rating</label><div class="stars">${[1,2,3,4,5].map(i=>`<button class="star ${i<=addRating?'lit':''}" onclick="addRating=${i};renderForm()">★</button>`).join('')}</div></div></div>`;
+    h+=`<div style="display:flex;gap:24px;margin-bottom:16px"><div class="fg" style="margin:0"><label>Emotion</label><div class="emo-row">${EMOTIONS.map(e=>`<button class="emo-btn ${addEmo===e?'sel':''}" onclick="pickEmo(this,'${e}')">${e}</button>`).join('')}</div></div><div class="fg" style="margin:0"><label>Rating</label><div class="stars">${[1,2,3,4,5].map(i=>`<button class="star ${i<=addRating?'lit':''}" onclick="pickRating(${i})">★</button>`).join('')}</div></div></div>`;
 
     // Notes
     h+=`<div class="fg"><label>Notes</label><textarea id="f-notes" placeholder="What was your thesis?"></textarea></div>`;
@@ -698,7 +698,7 @@ function renderPortfolio(){
         items.forEach(t=>{h+=renderPosCard(t);});
         h+=`</div></div>`;
     });
-    document.getElementById('pnl').innerHTML=h;
+    document.getElementById('pnl').innerHTML=h;enrichOpenPositions();
 }
 
 function renderPosCard(t){
@@ -714,9 +714,11 @@ function renderPosCard(t){
     else if(ac==='angel') details=`<div class="pos-detail"><span class="pd-lbl">Invested</span><span class="pd-val">${fmt$(t.investmentAmount)}</span></div><div class="pos-detail"><span class="pd-lbl">Equity</span><span class="pd-val">${t.equityPct}%</span></div><div class="pos-detail"><span class="pd-lbl">Status</span><span class="pd-val" style="color:${t.status==='active'?'var(--gld)':t.status==='exited'?'var(--grn)':'var(--red)'}">${t.status}</span></div><div class="pos-detail"><span class="pd-lbl">Return</span><span class="pd-val" style="color:${pnlColor(t.pnl||0)}">${t.exitValuation?fmt$(t.pnl):'—'}</span></div>`;
     else if(ac==='realestate') details=`<div class="pos-detail"><span class="pd-lbl">Purchase</span><span class="pd-val">${fmt$(t.purchasePrice)}</span></div><div class="pos-detail"><span class="pd-lbl">Current</span><span class="pd-val">${fmt$(t.currentValue)}</span></div><div class="pos-detail"><span class="pd-lbl">${t.generatesRent?'Rent/mo':'Type'}</span><span class="pd-val">${t.generatesRent?fmt$(t.monthlyRent):t.propertyType}</span></div><div class="pos-detail"><span class="pd-lbl">Unrealized</span><span class="pd-val" style="color:${pnlColor(t.pnl||0)}">${fmt$(t.pnl)}</span></div>`;
 
+    const liveTickerAttr=(['stocks','options','indices'].includes(ac)&&INST.stocks?.includes(t.instrument))?` data-live-ticker="${t.instrument}"`:'';
     return`<div class="card pos-card">
         <div class="pos-header"><span class="pos-inst">${t.instrument}</span>
-        ${open?'<span class="status-open">OPEN</span>':t.direction?`<span class="pos-dir ${t.direction.toLowerCase()}">${t.direction}</span>`:`<span class="pos-dir hold">HOLD</span>`}</div>
+        ${open?'<span class="status-open">OPEN</span>':t.direction?`<span class="pos-dir ${t.direction.toLowerCase()}">${t.direction}</span>`:`<span class="pos-dir hold">HOLD</span>`}
+        <span class="live-badge" style="display:none;align-items:center;gap:4px;margin-left:auto;font-size:12px;padding:3px 8px;background:var(--s1);border:1px solid var(--brd);border-radius:8px"${liveTickerAttr}></span></div>
         <div style="font-size:10px;color:${acl.color||'#888'};margin-bottom:8px">${acl.icon||''} ${acl.label||''}</div>
         <div class="pos-details">${details}</div>
         ${(t.tags||[]).length?`<div class="pos-tags">${t.tags.map(g=>`<span class="pill pill-tag">${g}</span>`).join('')}</div>`:''}
@@ -794,6 +796,43 @@ function drawBubble(){
     ctx.globalAlpha=0.8;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
     if(r>10){ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font=`${Math.max(8,Math.min(r/2,11))}px Inter`;ctx.textAlign='center';ctx.fillText(item.name,x,y+3);}});
     let lx=pad;Object.entries(AC).forEach(([k,v])=>{if(!Object.values(byInst).some(i=>i.ac===k))return;ctx.fillStyle=v.color;ctx.beginPath();ctx.arc(lx+5,20,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText(v.label,lx+13,24);lx+=ctx.measureText(v.label).width+28;});
+}
+
+// ═══ INLINE TOGGLES (no re-render) ═══
+function toggleTag(btn,t){if(addTags.has(t)){addTags.delete(t);btn.classList.remove('sel');}else{addTags.add(t);btn.classList.add('sel');}}
+function pickEmo(btn,e){addEmo=e;btn.closest('.emo-row').querySelectorAll('.emo-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');}
+function pickRating(n){addRating=n;document.querySelectorAll('.stars .star').forEach((b,i)=>b.classList.toggle('lit',i<n));}
+
+// ═══ LIVE PRICE FEED (Yahoo Finance via corsproxy) ═══
+const priceCache={};
+async function fetchPrice(symbol){
+    if(priceCache[symbol]&&Date.now()-priceCache[symbol].ts<60000)return priceCache[symbol];
+    try{
+        const r=await fetch(`https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
+        const j=await r.json();
+        const meta=j.chart?.result?.[0]?.meta;
+        if(!meta)return null;
+        const price=meta.regularMarketPrice;
+        const prevClose=meta.chartPreviousClose||meta.previousClose;
+        const change=price-prevClose;
+        const changePct=(change/prevClose*100);
+        const result={price,change,changePct,currency:meta.currency||'USD',ts:Date.now()};
+        priceCache[symbol]=result;
+        return result;
+    }catch(e){console.warn('Price fetch failed for',symbol,e);return null;}
+}
+
+// Show live price badge on open positions in portfolio
+async function enrichOpenPositions(){
+    const badges=document.querySelectorAll('[data-live-ticker]');
+    for(const el of badges){
+        const ticker=el.dataset.liveTicker;
+        const data=await fetchPrice(ticker);
+        if(data){
+            el.innerHTML=`<span style="font-family:'JetBrains Mono';font-weight:600">$${data.price.toFixed(2)}</span> <span style="font-size:11px;color:${data.change>=0?'var(--grn)':'var(--red)'}">${data.change>=0?'+':''}${data.changePct.toFixed(2)}%</span>`;
+            el.style.display='inline-flex';
+        }
+    }
 }
 
 // ═══ USER MENU ═══
