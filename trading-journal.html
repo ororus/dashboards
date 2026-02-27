@@ -187,7 +187,14 @@ canvas{border-radius:var(--radius-sm);}
     <div class="hdr-right">
         <button class="add-top-btn" onclick="openSheet()">+ New Trade</button>
         <div class="seg-ctrl" id="nav"></div>
-        <button id="user-btn" onclick="handleSignOut()" style="padding:6px 14px;background:var(--s1);border:1px solid var(--brd);border-radius:20px;color:var(--dim);font-size:11px;font-family:inherit;cursor:pointer;transition:all 0.2s;white-space:nowrap" title="Sign out"></button>
+        <div style="position:relative" id="user-wrap">
+            <button id="user-btn" onclick="toggleUserMenu()" style="padding:6px 14px;background:var(--s1);border:1px solid var(--brd);border-radius:20px;color:var(--dim);font-size:11px;font-family:inherit;cursor:pointer;transition:all 0.2s;white-space:nowrap"></button>
+            <div id="user-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1a1a1a;border:1px solid var(--brd2);border-radius:12px;min-width:160px;z-index:100;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+                <button onclick="openSheet();toggleUserMenu()" style="display:block;width:100%;padding:12px 16px;background:none;border:none;color:var(--txt);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;transition:background 0.15s" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background=''">+ Add a Trade</button>
+                <div style="height:1px;background:var(--brd)"></div>
+                <button onclick="handleSignOut()" style="display:block;width:100%;padding:12px 16px;background:none;border:none;color:var(--red);font-size:13px;font-family:inherit;cursor:pointer;text-align:left;transition:background 0.15s" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background=''">Logout</button>
+            </div>
+        </div>
     </div>
 </div>
 <div id="panels"></div>
@@ -274,66 +281,10 @@ function calcPnL(t){
     }
 }
 
-// ═══ DATA ═══
-function seedTrades(){
-    const trades=[];const base=new Date(2026,1,1);
-    // Stocks
-    ['AAPL','META','NVDA','TSLA','AMZN','MSFT','GOOG'].forEach((inst,i)=>{
-        const ep=100+Math.random()*800;const dir=Math.random()>0.4?'LONG':'SHORT';const win=Math.random()<0.55;
-        const xp=ep*(1+(Math.random()*0.04+0.005)*(win?(dir==='LONG'?1:-1):(dir==='LONG'?-1:1)));
-        const sh=Math.floor(Math.random()*50)+5;
-        trades.push({id:Date.now()+i,date:new Date(base.getTime()+Math.random()*26*86400000).toISOString().slice(0,16),
-            assetClass:'stocks',instrument:inst,direction:dir,entry:+ep.toFixed(2),exit:+xp.toFixed(2),shares:sh,
-            tags:['trend'],notes:'',emotion:'😎',rating:4,duration:Math.floor(Math.random()*48+1)+'h'});
-    });
-    // Forex
-    ['EURUSD','GBPUSD','USDJPY'].forEach((inst,i)=>{
-        const isJpy=inst.includes('JPY');const ep=isJpy?150+Math.random()*5:1+Math.random()*0.3;
-        const dir=Math.random()>0.5?'LONG':'SHORT';const win=Math.random()<0.5;
-        const pipDec=isJpy?0.01:0.0001;const pips=(Math.floor(Math.random()*80)+10)*(win?1:-1)*(dir==='LONG'?1:-1);
-        const xp=ep+pips*pipDec;const lots=+(Math.random()*2+0.1).toFixed(2);
-        trades.push({id:Date.now()+100+i,date:new Date(base.getTime()+Math.random()*26*86400000).toISOString().slice(0,16),
-            assetClass:'forex',instrument:inst,direction:dir,entry:+ep.toFixed(isJpy?3:5),exit:+xp.toFixed(isJpy?3:5),
-            lots,pipValue:isJpy?6.67:10,tags:['scalp'],notes:'',emotion:'🔥',rating:3,duration:Math.floor(Math.random()*24+1)+'h'});
-    });
-    // Commodities
-    ['XAUUSD','XAGUSD'].forEach((inst,i)=>{
-        const ep=inst==='XAUUSD'?2900+Math.random()*50:32+Math.random()*2;
-        const dir=Math.random()>0.4?'LONG':'SHORT';const win=Math.random()<0.55;
-        const mv=ep*(Math.random()*0.02+0.003)*(win?(dir==='LONG'?1:-1):(dir==='LONG'?-1:1));
-        const xp=ep+mv;const lots=+(Math.random()*5+0.5).toFixed(2);
-        trades.push({id:Date.now()+200+i,date:new Date(base.getTime()+Math.random()*26*86400000).toISOString().slice(0,16),
-            assetClass:'commodities',instrument:inst,direction:dir,entry:+ep.toFixed(2),exit:+xp.toFixed(2),
-            lots,contractSize:inst==='XAUUSD'?100:5000,tags:['trend'],notes:'',emotion:'😎',rating:4,duration:Math.floor(Math.random()*72+1)+'h'});
-    });
-    // Indices
-    trades.push({id:Date.now()+300,date:new Date(base.getTime()+Math.random()*26*86400000).toISOString().slice(0,16),
-        assetClass:'indices',instrument:'NAS100',direction:'LONG',entry:21200,exit:21450,contracts:2,pointValue:20,
-        tags:['breakout'],notes:'',emotion:'🔥',rating:5,duration:'8h'});
-    // Options
-    trades.push({id:Date.now()+400,date:new Date(base.getTime()+Math.random()*26*86400000).toISOString().slice(0,16),
-        assetClass:'options',instrument:'NVDA',direction:'LONG',optionType:'CALL',strike:900,expiry:'2026-03-21',
-        premium:12.50,exitPremium:18.75,contracts:5,tags:['earnings'],notes:'Pre-earnings play',emotion:'🔥',rating:5,duration:'3d'});
-    // Angel
-    trades.push({id:Date.now()+500,date:'2025-06-15T10:00',assetClass:'angel',instrument:'TechStartupXYZ',
-        investmentAmount:25000,equityPct:2.5,valuation:1000000,exitValuation:null,status:'active',
-        tags:['fundamental'],notes:'Seed round',emotion:'😎',rating:4});
-    // Real Estate
-    trades.push({id:Date.now()+600,date:'2024-01-10T10:00',assetClass:'realestate',instrument:'Dubai Marina Apt',
-        propertyType:'Residential',purchasePrice:850000,currentValue:980000,generatesRent:true,monthlyRent:5500,monthlyExpenses:1200,
-        tags:[],notes:'2BR apartment',emotion:'😎',rating:5});
-    // Open trade (no exit)
-    trades.push({id:Date.now()+700,date:new Date(base.getTime()+24*86400000).toISOString().slice(0,16),
-        assetClass:'stocks',instrument:'AAPL',direction:'LONG',entry:228,exit:null,shares:100,
-        tags:['swing'],notes:'Holding through earnings',emotion:'😐',rating:3,duration:null});
-
-    trades.forEach(t=>{if(t.exit!==null&&t.exit!==undefined)t.pnl=Math.round(calcPnL(t));else t.pnl=0;});
-    return trades.sort((a,b)=>new Date(b.date)-new Date(a.date));
-}
 // ═══ DATA LAYER (Supabase + localStorage fallback) ═══
-function getTrades(){let t=localStorage.getItem('tj-trades-v2');if(!t){const s=seedTrades();localStorage.setItem('tj-trades-v2',JSON.stringify(s));return s;}return JSON.parse(t);}
+function getTrades(){let t=localStorage.getItem('tj-trades-v2');if(!t)return[];return JSON.parse(t);}
 function saveTradesLocal(t){localStorage.setItem('tj-trades-v2',JSON.stringify(t));}
-function saveTrades(t){saveTradesLocal(t);} // Will be overridden after auth
+function saveTrades(t){saveTradesLocal(t);}
 
 let trades=getTrades();
 
@@ -595,7 +546,21 @@ function renderDashboard(){
     const best=closed.length?Math.max(...closed.map(x=>x.pnl)):0;
     const openCount=t.filter(x=>isOpen(x)).length;
 
-    let h=`<div class="stats">
+    // Welcome message
+    let h=`<div class="card" style="margin-bottom:16px;border-color:rgba(52,211,153,0.15);background:linear-gradient(135deg,rgba(52,211,153,0.04),rgba(103,232,249,0.03))">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+            <span style="font-size:24px">📊</span>
+            <div><div style="font-size:16px;font-weight:700">Welcome to Tradyom Journal</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:2px">by the Tradyom Team</div></div>
+        </div>
+        <div style="font-size:13px;color:var(--dim);line-height:1.6">
+            Track every trade across stocks, options, forex, commodities, futures, angel investments, and real estate — all in one place.
+            Log your entries, exits, emotions, and lessons. Build discipline. Grow your edge. Your journal is your most powerful trading tool.
+            <span style="color:var(--grn);font-weight:600">Start by adding your first trade ↗</span>
+        </div>
+    </div>`;
+
+    h+=`<div class="stats">
         <div class="card stat"><div class="lbl">Realized P&L</div><div class="val" style="color:${pnlColor(totalPnl)}">${fmt$(totalPnl)}</div><div class="lbl">${closed.length} closed</div></div>
         <div class="card stat"><div class="lbl">Win Rate</div><div class="val" style="color:var(--cyn)">${winRate}%</div><div class="lbl">${wins}W / ${losses}L</div></div>
         <div class="card stat"><div class="lbl">Open Positions</div><div class="val" style="color:var(--gld)">${openCount}</div><div class="lbl">active</div></div>
@@ -603,7 +568,20 @@ function renderDashboard(){
         <div class="card stat"><div class="lbl">Best Trade</div><div class="val" style="color:var(--grn)">${fmt$(best)}</div><div class="lbl">single trade</div></div>
     </div>`;
     h+=`<div class="row2"><div class="card"><div class="card-title">Equity Curve</div><canvas id="eqCanvas" height="260"></canvas></div><div class="card"><div class="card-title">Recent Trades</div><div id="recentList"></div></div></div>`;
-    h+=`<div class="card"><div class="card-title">Portfolio Treemap</div><canvas id="tmCanvas" height="280"></canvas></div>`;
+
+    // Earnings Calendar
+    const today=new Date().toISOString().slice(0,10);
+    const upcoming=EARNINGS_CAL.filter(e=>e.date>=today).slice(0,10);
+    h+=`<div class="row2"><div class="card"><div class="card-title">Portfolio Treemap</div><canvas id="tmCanvas" height="280"></canvas></div>
+    <div class="card"><div class="card-title">📅 US Earnings Calendar</div>
+    <div style="max-height:280px;overflow-y:auto">
+    ${upcoming.length?upcoming.map(e=>{
+        const d=new Date(e.date+'T12:00:00');const ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
+        return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px">
+            <div><span style="font-weight:700;color:var(--cyn)">${e.ticker}</span> <span style="color:var(--dim)">${e.name}</span></div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:var(--mut)">${ds}</span><span style="font-size:10px;padding:2px 6px;border-radius:6px;background:${e.time==='BMO'?'rgba(251,191,36,0.1)':'rgba(103,232,249,0.1)'};color:${e.time==='BMO'?'var(--gld)':'var(--cyn)'}">${e.time}</span></div>
+        </div>`;}).join(''):'<div style="color:var(--mut);font-size:13px;padding:20px 0;text-align:center">No upcoming earnings</div>'}
+    </div></div></div>`;
     document.getElementById('pnl').innerHTML=h;
     drawEquity();drawTreemap();
     document.getElementById('recentList').innerHTML=t.slice(0,10).map(r=>{
@@ -818,11 +796,38 @@ function drawBubble(){
     let lx=pad;Object.entries(AC).forEach(([k,v])=>{if(!Object.values(byInst).some(i=>i.ac===k))return;ctx.fillStyle=v.color;ctx.beginPath();ctx.arc(lx+5,20,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText(v.label,lx+13,24);lx+=ctx.measureText(v.label).width+28;});
 }
 
+// ═══ USER MENU ═══
+function toggleUserMenu(){const m=document.getElementById('user-menu');m.style.display=m.style.display==='none'?'block':'none';}
+document.addEventListener('click',e=>{if(!e.target.closest('#user-wrap')){const m=document.getElementById('user-menu');if(m)m.style.display='none';}});
+
 // ═══ SIGN OUT ═══
 async function handleSignOut(){
     await sb.auth.signOut();
+    localStorage.removeItem('tj-trades-v2');
     window.location.href='auth.html';
 }
+
+// ═══ EARNINGS CALENDAR DATA (US Markets) ═══
+const EARNINGS_CAL=[
+    {date:'2026-03-04',ticker:'CRM',name:'Salesforce',time:'AMC'},
+    {date:'2026-03-04',ticker:'CRWD',name:'CrowdStrike',time:'AMC'},
+    {date:'2026-03-05',ticker:'AVGO',name:'Broadcom',time:'AMC'},
+    {date:'2026-03-05',ticker:'MRVL',name:'Marvell Tech',time:'AMC'},
+    {date:'2026-03-06',ticker:'COST',name:'Costco',time:'AMC'},
+    {date:'2026-03-06',ticker:'BJ',name:'BJ\'s Wholesale',time:'BMO'},
+    {date:'2026-03-10',ticker:'ORCL',name:'Oracle',time:'AMC'},
+    {date:'2026-03-11',ticker:'ADBE',name:'Adobe',time:'AMC'},
+    {date:'2026-03-12',ticker:'DG',name:'Dollar General',time:'BMO'},
+    {date:'2026-03-13',ticker:'ULTA',name:'Ulta Beauty',time:'AMC'},
+    {date:'2026-03-17',ticker:'XPEV',name:'XPeng',time:'BMO'},
+    {date:'2026-03-18',ticker:'NKE',name:'Nike',time:'AMC'},
+    {date:'2026-03-19',ticker:'GIS',name:'General Mills',time:'BMO'},
+    {date:'2026-03-20',ticker:'ACN',name:'Accenture',time:'BMO'},
+    {date:'2026-03-20',ticker:'FDX',name:'FedEx',time:'AMC'},
+    {date:'2026-03-25',ticker:'GME',name:'GameStop',time:'AMC'},
+    {date:'2026-03-26',ticker:'PAYX',name:'Paychex',time:'BMO'},
+    {date:'2026-03-27',ticker:'LULU',name:'Lululemon',time:'AMC'},
+];
 
 // ═══ INIT ═══
 (async()=>{
@@ -830,10 +835,12 @@ async function handleSignOut(){
     if(!authed)return;
     // Update user button
     const ub=document.getElementById('user-btn');
-    if(ub)ub.textContent='👤 '+(currentUser.username||currentUser.email?.split('@')[0]||'User')+' ↗';
+    if(ub)ub.textContent='👤 '+(currentUser.username||currentUser.email?.split('@')[0]||'User');
     // Load from DB
     await loadTradesFromDB();
     initNav();render();
+    // Auto-open Add Trade if user has no trades (first visit after signup)
+    if(trades.length===0) openSheet();
 })();
 document.addEventListener('keydown',e=>{if(document.querySelector('.sheet-bg.show')){if(e.key==='Escape')closeSheet();return;}if(e.key>='1'&&e.key<='5')switchTab(+e.key-1);if(e.key==='n'||e.key==='N')openSheet();});
 </script>
