@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tradyom Journal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -186,6 +187,7 @@ canvas{border-radius:var(--radius-sm);}
     <div class="hdr-right">
         <button class="add-top-btn" onclick="openSheet()">+ New Trade</button>
         <div class="seg-ctrl" id="nav"></div>
+        <button id="user-btn" onclick="handleSignOut()" style="padding:6px 14px;background:var(--s1);border:1px solid var(--brd);border-radius:20px;color:var(--dim);font-size:11px;font-family:inherit;cursor:pointer;transition:all 0.2s;white-space:nowrap" title="Sign out"></button>
     </div>
 </div>
 <div id="panels"></div>
@@ -202,6 +204,23 @@ canvas{border-radius:var(--radius-sm);}
 </div>
 
 <script>
+// ═══ SUPABASE ═══
+const SUPABASE_URL='https://iyvuejfsageohhguenjm.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dnVlamZzYWdlb2hoZ3VlbmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTQwNDgsImV4cCI6MjA4Nzc3MDA0OH0.iipRqsyYiNR4pX4YVOEzbgA4ZDR1tf6lxeA6mEv9ALA';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+let currentUser=null;
+
+// Auth guard — redirect to auth if not logged in
+async function checkAuth(){
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='auth.html';return false;}
+    currentUser=session.user;
+    // Show username in header
+    const prof=await sb.from('profiles').select('username').eq('id',currentUser.id).single();
+    if(prof.data)currentUser.username=prof.data.username;
+    return true;
+}
+
 // ═══ ASSET CLASS CONFIG ═══
 const AC = {
     stocks:   {label:'Stocks',icon:'📈',color:'#60a5fa',fields:'stock'},
@@ -311,9 +330,57 @@ function seedTrades(){
     trades.forEach(t=>{if(t.exit!==null&&t.exit!==undefined)t.pnl=Math.round(calcPnL(t));else t.pnl=0;});
     return trades.sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
+// ═══ DATA LAYER (Supabase + localStorage fallback) ═══
 function getTrades(){let t=localStorage.getItem('tj-trades-v2');if(!t){const s=seedTrades();localStorage.setItem('tj-trades-v2',JSON.stringify(s));return s;}return JSON.parse(t);}
-function saveTrades(t){localStorage.setItem('tj-trades-v2',JSON.stringify(t));}
+function saveTradesLocal(t){localStorage.setItem('tj-trades-v2',JSON.stringify(t));}
+function saveTrades(t){saveTradesLocal(t);} // Will be overridden after auth
+
 let trades=getTrades();
+
+// Load trades from Supabase (called after auth check)
+async function loadTradesFromDB(){
+    if(!currentUser)return;
+    const{data,error}=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+    if(error){console.warn('DB load failed, using localStorage:',error.message);return;}
+    if(data&&data.length>0){
+        trades=data.map(dbToTrade);saveTradesLocal(trades);render();
+    }
+}
+
+// Save a single trade to Supabase
+async function saveTradeDB(t){
+    if(!currentUser)return;
+    const row=tradeToDb(t);
+    const{error}=await sb.from('trades').upsert(row);
+    if(error)console.warn('DB save failed:',error.message);
+}
+
+// Map DB row → local trade object
+function dbToTrade(r){
+    return{id:r.id,date:r.date_opened,assetClass:r.asset_class,instrument:r.instrument,direction:r.direction,
+        entry:r.entry_price?+r.entry_price:null,exit:r.exit_price?+r.exit_price:null,
+        shares:r.shares?+r.shares:null,lots:r.lots?+r.lots:null,contracts:r.contracts?+r.contracts:null,
+        pipValue:r.pip_value?+r.pip_value:null,contractSize:r.contract_size?+r.contract_size:null,
+        pointValue:r.point_value?+r.point_value:null,tickSize:r.tick_size?+r.tick_size:null,tickValue:r.tick_value?+r.tick_value:null,
+        optionType:r.option_type,strike:r.strike?+r.strike:null,expiry:r.expiry,premium:r.premium?+r.premium:null,exitPremium:r.exit_premium?+r.exit_premium:null,
+        investmentAmount:r.investment_amount?+r.investment_amount:null,equityPct:r.equity_pct?+r.equity_pct:null,valuation:r.valuation?+r.valuation:null,exitValuation:r.exit_valuation?+r.exit_valuation:null,status:r.deal_status,
+        propertyType:r.property_type,purchasePrice:r.purchase_price?+r.purchase_price:null,currentValue:r.current_value?+r.current_value:null,generatesRent:r.generates_rent,monthlyRent:r.monthly_rent?+r.monthly_rent:null,monthlyExpenses:r.monthly_expenses?+r.monthly_expenses:null,
+        pnl:r.pnl?+r.pnl:0,tags:r.tags||[],notes:r.notes||'',emotion:r.emotion||'',rating:r.rating||0,duration:null};
+}
+
+// Map local trade → DB row
+function tradeToDb(t){
+    return{user_id:currentUser?.id,asset_class:t.assetClass||'stocks',instrument:t.instrument,direction:t.direction||null,
+        entry_price:t.entry||null,exit_price:t.exit||null,date_opened:t.date||new Date().toISOString(),
+        pnl:t.pnl||0,notes:t.notes||'',tags:t.tags||[],emotion:t.emotion||'',rating:t.rating||0,
+        shares:t.shares||null,lots:t.lots||null,contracts:t.contracts||null,
+        pip_value:t.pipValue||null,contract_size:t.contractSize||null,point_value:t.pointValue||null,
+        tick_size:t.tickSize||null,tick_value:t.tickValue||null,
+        option_type:t.optionType||null,strike:t.strike||null,expiry:t.expiry||null,premium:t.premium||null,exit_premium:t.exitPremium||null,
+        investment_amount:t.investmentAmount||null,equity_pct:t.equityPct||null,valuation:t.valuation||null,exit_valuation:t.exitValuation||null,deal_status:t.status||null,
+        property_type:t.propertyType||null,purchase_price:t.purchasePrice||null,current_value:t.currentValue||null,
+        generates_rent:t.generatesRent||false,monthly_rent:t.monthlyRent||null,monthly_expenses:t.monthlyExpenses||null};
+}
 
 // ═══ HELPERS ═══
 function pnlColor(v){return v>=0?'var(--grn)':'var(--red)';}
@@ -511,6 +578,7 @@ function saveTrade(){
     if(ed&&xd){const h=Math.round((new Date(xd)-new Date(ed))/3600000);if(h>0)t.duration=h+'h';}
 
     trades.unshift(t);saveTrades(trades);
+    saveTradeDB(t); // async save to Supabase
     closeSheet();toast('✅ Trade saved');switchTab(2);
 }
 
@@ -750,8 +818,23 @@ function drawBubble(){
     let lx=pad;Object.entries(AC).forEach(([k,v])=>{if(!Object.values(byInst).some(i=>i.ac===k))return;ctx.fillStyle=v.color;ctx.beginPath();ctx.arc(lx+5,20,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText(v.label,lx+13,24);lx+=ctx.measureText(v.label).width+28;});
 }
 
+// ═══ SIGN OUT ═══
+async function handleSignOut(){
+    await sb.auth.signOut();
+    window.location.href='auth.html';
+}
+
 // ═══ INIT ═══
-initNav();render();
+(async()=>{
+    const authed=await checkAuth();
+    if(!authed)return;
+    // Update user button
+    const ub=document.getElementById('user-btn');
+    if(ub)ub.textContent='👤 '+(currentUser.username||currentUser.email?.split('@')[0]||'User')+' ↗';
+    // Load from DB
+    await loadTradesFromDB();
+    initNav();render();
+})();
 document.addEventListener('keydown',e=>{if(document.querySelector('.sheet-bg.show')){if(e.key==='Escape')closeSheet();return;}if(e.key>='1'&&e.key<='5')switchTab(+e.key-1);if(e.key==='n'||e.key==='N')openSheet();});
 </script>
 </body>

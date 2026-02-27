@@ -4,436 +4,245 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tradyom — Sign Up</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#000;--s1:rgba(255,255,255,0.04);--s2:rgba(255,255,255,0.07);--brd:rgba(255,255,255,0.08);--brd2:rgba(255,255,255,0.12);--txt:#f5f5f7;--dim:rgba(255,255,255,0.55);--mut:rgba(255,255,255,0.3);--grn:#34d399;--red:#f87171;--cyn:#67e8f9;--glass:rgba(20,20,20,0.75);--radius:16px;--radius-sm:12px;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 50% 40% at 30% 20%,rgba(52,211,153,0.06),transparent 60%),radial-gradient(ellipse 40% 50% at 70% 80%,rgba(103,232,249,0.04),transparent 60%);pointer-events:none;}
-
 .auth-container{position:relative;z-index:1;width:100%;max-width:440px;padding:20px;}
-
-/* Logo */
-.logo-area{text-align:center;margin-bottom:32px;}
-.logo{font-size:2rem;font-weight:800;letter-spacing:-0.5px;}.logo span{color:var(--grn);}
-.logo-sub{font-size:13px;color:var(--dim);margin-top:6px;}
-
-/* Card */
+.logo-area{text-align:center;margin-bottom:32px;}.logo{font-size:2rem;font-weight:800;letter-spacing:-0.5px;}.logo span{color:var(--grn);}.logo-sub{font-size:13px;color:var(--dim);margin-top:6px;}
 .auth-card{background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--brd);border-radius:20px;padding:32px;animation:fadeUp 0.4s cubic-bezier(0.16,1,0.3,1);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-
-/* Tabs */
 .auth-tabs{display:flex;background:var(--s1);border:1px solid var(--brd);border-radius:var(--radius-sm);padding:3px;gap:2px;margin-bottom:24px;}
 .auth-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--dim);font-size:14px;font-family:inherit;font-weight:500;cursor:pointer;border-radius:10px;transition:all 0.25s;text-align:center;}
-.auth-tab:hover{color:var(--txt);}.auth-tab.on{background:rgba(255,255,255,0.1);color:#fff;font-weight:600;backdrop-filter:blur(10px);}
-
-/* Form */
-.form-view{display:none;}.form-view.on{display:block;animation:fadeUp 0.3s ease;}
-.fg{margin-bottom:18px;position:relative;}
-.fg label{display:block;font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.auth-tab:hover{color:var(--txt);}.auth-tab.on{background:rgba(255,255,255,0.1);color:#fff;font-weight:600;}
+.fg{margin-bottom:18px;position:relative;}.fg label{display:block;font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
 .fg input,.fg select{width:100%;padding:13px 16px;background:var(--s1);border:1px solid var(--brd);border-radius:var(--radius-sm);color:var(--txt);font-size:15px;font-family:inherit;outline:none;transition:all 0.2s;}
-.fg input:focus,.fg select:focus{border-color:var(--grn);background:var(--s2);}
-.fg input::placeholder{color:var(--mut);}
+.fg input:focus,.fg select:focus{border-color:var(--grn);background:var(--s2);}.fg input::placeholder{color:var(--mut);}
 .fg select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
-
-/* Input with icon */
-.fg .input-wrap{position:relative;}
-.fg .input-wrap input{padding-right:44px;}
-.fg .input-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;}
-.fg .input-action{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:4px;transition:color 0.2s;}
-.fg .input-action:hover{color:var(--txt);}
-
-/* Username check */
+.fg .input-wrap{position:relative;}.fg .input-wrap input{padding-right:44px;}
+.fg .input-action{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;padding:4px;transition:color 0.2s;}.fg .input-action:hover{color:var(--txt);}
 .fg .username-status{position:absolute;right:14px;top:38px;font-size:12px;font-weight:600;display:none;}
-.fg .username-status.available{display:block;color:var(--grn);}
-.fg .username-status.taken{display:block;color:var(--red);}
-.fg .username-status.checking{display:block;color:var(--dim);}
-
-/* Validation */
-.fg .error{font-size:11px;color:var(--red);margin-top:4px;display:none;}
-.fg.has-error input,.fg.has-error select{border-color:var(--red);}
-.fg.has-error .error{display:block;}
-.fg.valid input{border-color:var(--grn);}
-
-/* Password strength */
-.pw-strength{display:flex;gap:4px;margin-top:6px;}
-.pw-bar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.08);transition:background 0.3s;}
-.pw-bar.weak{background:var(--red);}.pw-bar.medium{background:#fbbf24;}.pw-bar.strong{background:var(--grn);}
-.pw-label{font-size:10px;color:var(--mut);margin-top:4px;}
-
-/* Checkbox */
-.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;}
-.check-row input[type="checkbox"]{width:18px;height:18px;margin-top:2px;accent-color:var(--grn);cursor:pointer;}
-.check-row label{font-size:12px;color:var(--dim);cursor:pointer;line-height:1.4;}
-.check-row label a{color:var(--cyn);text-decoration:none;}.check-row label a:hover{text-decoration:underline;}
-
-/* Button */
-.auth-btn{width:100%;padding:14px;background:var(--grn);color:#000;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-top:4px;}
-.auth-btn:hover{opacity:0.9;transform:translateY(-1px);}.auth-btn:active{transform:translateY(0);}
-.auth-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-.auth-btn.secondary{background:transparent;border:1px solid var(--brd);color:var(--txt);margin-top:10px;}
-.auth-btn.secondary:hover{border-color:var(--brd2);}
-
-/* Divider */
-.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--mut);font-size:12px;}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd);}
-
-/* Social */
-.social-btns{display:flex;gap:10px;margin-bottom:20px;}
-.social-btn{flex:1;padding:12px;border:1px solid var(--brd);border-radius:var(--radius-sm);background:transparent;color:var(--txt);font-size:13px;font-family:inherit;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:500;}
-.social-btn:hover{border-color:var(--brd2);background:var(--s1);}
-.social-btn img{width:18px;height:18px;}
-
-/* Links */
-.auth-link{display:block;text-align:center;font-size:13px;color:var(--cyn);cursor:pointer;margin-top:16px;text-decoration:none;transition:opacity 0.2s;}
-.auth-link:hover{opacity:0.8;}
-
-/* Success state */
-.success-view{text-align:center;padding:20px 0;}
-.success-icon{font-size:48px;margin-bottom:16px;}
-.success-title{font-size:1.3rem;font-weight:700;margin-bottom:8px;}
-.success-sub{font-size:13px;color:var(--dim);margin-bottom:24px;line-height:1.5;}
-
-/* Forgot password */
-.back-link{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);cursor:pointer;margin-bottom:20px;transition:color 0.2s;}
-.back-link:hover{color:var(--txt);}
-
-/* Toast */
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--grn);color:#000;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all 0.35s cubic-bezier(0.16,1,0.3,1);box-shadow:0 4px 20px rgba(52,211,153,0.3);}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast.error{background:var(--red);color:#fff;box-shadow:0 4px 20px rgba(248,113,113,0.3);}
-
-/* Footer */
-.auth-footer{text-align:center;margin-top:24px;font-size:11px;color:var(--mut);}
-.auth-footer a{color:var(--dim);text-decoration:none;}.auth-footer a:hover{color:var(--txt);}
-
-/* Responsive */
-@media(max-width:480px){
-    .auth-container{padding:16px;}
-    .auth-card{padding:24px 20px;border-radius:16px;}
-    .logo{font-size:1.6rem;}
-    .fg input,.fg select{padding:12px 14px;font-size:14px;}
-    .social-btns{flex-direction:column;}
-}
+.fg .username-status.available{display:block;color:var(--grn);}.fg .username-status.taken{display:block;color:var(--red);}.fg .username-status.checking{display:block;color:var(--dim);}
+.fg .error{font-size:11px;color:var(--red);margin-top:4px;display:none;}.fg.has-error input,.fg.has-error select{border-color:var(--red);}.fg.has-error .error{display:block;}
+.pw-strength{display:flex;gap:4px;margin-top:6px;}.pw-bar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,0.08);transition:background 0.3s;}.pw-bar.weak{background:var(--red);}.pw-bar.medium{background:#fbbf24;}.pw-bar.strong{background:var(--grn);}.pw-label{font-size:10px;color:var(--mut);margin-top:4px;}
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;}.check-row input[type="checkbox"]{width:18px;height:18px;margin-top:2px;accent-color:var(--grn);cursor:pointer;}.check-row label{font-size:12px;color:var(--dim);cursor:pointer;line-height:1.4;}.check-row label a{color:var(--cyn);text-decoration:none;}
+.auth-btn{width:100%;padding:14px;background:var(--grn);color:#000;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-top:4px;}.auth-btn:hover{opacity:0.9;transform:translateY(-1px);}.auth-btn:active{transform:translateY(0);}.auth-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.auth-btn.secondary{background:transparent;border:1px solid var(--brd);color:var(--txt);margin-top:10px;}.auth-btn.secondary:hover{border-color:var(--brd2);}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--mut);font-size:12px;}.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--brd);}
+.social-btns{display:flex;gap:10px;margin-bottom:20px;}.social-btn{flex:1;padding:12px;border:1px solid var(--brd);border-radius:var(--radius-sm);background:transparent;color:var(--txt);font-size:13px;font-family:inherit;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:500;}.social-btn:hover{border-color:var(--brd2);background:var(--s1);}
+.auth-link{display:block;text-align:center;font-size:13px;color:var(--cyn);cursor:pointer;margin-top:16px;text-decoration:none;transition:opacity 0.2s;}.auth-link:hover{opacity:0.8;}
+.success-view{text-align:center;padding:20px 0;}.success-icon{font-size:48px;margin-bottom:16px;}.success-title{font-size:1.3rem;font-weight:700;margin-bottom:8px;}.success-sub{font-size:13px;color:var(--dim);margin-bottom:24px;line-height:1.5;}
+.back-link{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);cursor:pointer;margin-bottom:20px;transition:color 0.2s;}.back-link:hover{color:var(--txt);}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(30px);padding:12px 24px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;opacity:0;transition:all 0.35s cubic-bezier(0.16,1,0.3,1);}.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}.toast.ok{background:var(--grn);color:#000;}.toast.err{background:var(--red);color:#fff;}
+.auth-footer{text-align:center;margin-top:24px;font-size:11px;color:var(--mut);}.auth-footer a{color:var(--dim);text-decoration:none;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.auth-container{padding:16px;}.auth-card{padding:24px 20px;border-radius:16px;}.logo{font-size:1.6rem;}.fg input,.fg select{padding:12px 14px;font-size:14px;}.social-btns{flex-direction:column;}}
 </style>
 </head>
 <body>
 <div class="auth-container">
-    <div class="logo-area">
-        <div class="logo">Tradyom<span>.</span>Journal</div>
-        <div class="logo-sub">Your intelligent trading companion</div>
-    </div>
-
+    <div class="logo-area"><div class="logo">Tradyom<span>.</span>Journal</div><div class="logo-sub">Your intelligent trading companion</div></div>
     <div class="auth-card" id="authCard"></div>
-
-    <div class="auth-footer">
-        © 2026 Tradyom · <a href="#">Privacy</a> · <a href="#">Terms</a>
-    </div>
+    <div class="auth-footer">© 2026 Tradyom · <a href="#">Privacy</a> · <a href="#">Terms</a></div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
+// ═══ SUPABASE ═══
+const SUPABASE_URL='https://iyvuejfsageohhguenjm.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5dnVlamZzYWdlb2hoZ3VlbmptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTQwNDgsImV4cCI6MjA4Nzc3MDA0OH0.iipRqsyYiNR4pX4YVOEzbgA4ZDR1tf6lxeA6mEv9ALA';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+
+// Check if already logged in
+sb.auth.getSession().then(({data:{session}})=>{if(session)window.location.href='trading-journal.html';});
+
 // ═══ STATE ═══
-let view='signup'; // signup | signin | forgot | reset-sent | signup-success
-let formData={email:'',username:'',country:'',dob:'',password:'',confirmPassword:''};
-let usernameStatus=''; // '' | 'checking' | 'available' | 'taken'
-let showPassword=false;
-let showConfirmPassword=false;
-let agreeTerms=false;
-
-// Simulated taken usernames
-const TAKEN_USERNAMES=['admin','tradyom','rami','test','user','trader','demo','nabu','vaya'];
-
-// Countries
+let view='signup',showPw=false,showCpw=false,agreeTerms=false,usernameOk=null,loading=false;
 const COUNTRIES=["Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania","Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Togo","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+
+function toast(msg,ok){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(ok?'ok':'err')+' show';setTimeout(()=>t.classList.remove('show'),3500);}
+function maxDOB(){const d=new Date();d.setFullYear(d.getFullYear()-18);return d.toISOString().slice(0,10);}
+function clearErr(id){document.getElementById(id)?.classList.remove('has-error');}
+function setErr(id){document.getElementById(id)?.classList.add('has-error');}
 
 // ═══ RENDER ═══
 function render(){
-    const card=document.getElementById('authCard');
-    if(view==='signup') card.innerHTML=renderSignup();
-    else if(view==='signin') card.innerHTML=renderSignin();
-    else if(view==='forgot') card.innerHTML=renderForgot();
-    else if(view==='reset-sent') card.innerHTML=renderResetSent();
-    else if(view==='signup-success') card.innerHTML=renderSignupSuccess();
+    const c=document.getElementById('authCard');
+    if(view==='signup')c.innerHTML=signupHTML();
+    else if(view==='signin')c.innerHTML=signinHTML();
+    else if(view==='forgot')c.innerHTML=forgotHTML();
+    else if(view==='reset-sent')c.innerHTML=resetSentHTML();
+    else if(view==='verify')c.innerHTML=verifyHTML();
+    if(view==='signup')setTimeout(updateStrength,50);
 }
 
-function renderSignup(){
-    return`
-    <div class="auth-tabs">
-        <button class="auth-tab on" onclick="switchView('signup')">Sign Up</button>
-        <button class="auth-tab" onclick="switchView('signin')">Sign In</button>
-    </div>
+function socialBtns(action){
+    return`<div class="social-btns">
+        <button class="social-btn" onclick="socialAuth('google')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Google</button>
+        <button class="social-btn" onclick="socialAuth('apple')"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>Apple</button>
+    </div><div class="divider">or ${action} with email</div>`;
+}
 
-    <div class="social-btns">
-        <button class="social-btn" onclick="toast('Google sign-up coming soon')">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Google
-        </button>
-        <button class="social-btn" onclick="toast('Apple sign-up coming soon')">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-            Apple
-        </button>
-    </div>
-
-    <div class="divider">or sign up with email</div>
-
+function signupHTML(){
+    return`<div class="auth-tabs"><button class="auth-tab on">Sign Up</button><button class="auth-tab" onclick="view='signin';render()">Sign In</button></div>
+    ${socialBtns('sign up')}
     <form onsubmit="handleSignup(event)">
-        <div class="fg" id="fg-email">
-            <label>Email Address</label>
-            <input type="email" id="f-email" placeholder="you@example.com" value="${formData.email}" oninput="formData.email=this.value;clearError('fg-email')" autocomplete="email" required/>
-            <div class="error" id="err-email">Please enter a valid email</div>
-        </div>
-
-        <div class="fg" id="fg-username">
-            <label>Username</label>
-            <input type="text" id="f-username" placeholder="Choose a unique username" value="${formData.username}" oninput="formData.username=this.value;checkUsername(this.value)" autocomplete="username" maxlength="20" required/>
-            <span class="username-status ${usernameStatus}" id="username-status">
-                ${usernameStatus==='checking'?'⏳ Checking...':usernameStatus==='available'?'✅ Available':usernameStatus==='taken'?'❌ Taken':''}
-            </span>
-            <div class="error" id="err-username">Username must be 3-20 characters (letters, numbers, underscores)</div>
-        </div>
-
-        <div class="fg" id="fg-country">
-            <label>Country of Residence</label>
-            <select id="f-country" onchange="formData.country=this.value;clearError('fg-country')" required>
-                <option value="" disabled ${!formData.country?'selected':''}>Select your country</option>
-                ${COUNTRIES.map(c=>`<option value="${c}" ${formData.country===c?'selected':''}>${c}</option>`).join('')}
-            </select>
-            <div class="error" id="err-country">Please select your country</div>
-        </div>
-
-        <div class="fg" id="fg-dob">
-            <label>Date of Birth</label>
-            <input type="date" id="f-dob" value="${formData.dob}" onchange="formData.dob=this.value;clearError('fg-dob')" required max="${getMaxDOB()}"/>
-            <div class="error" id="err-dob">You must be at least 18 years old</div>
-        </div>
-
-        <div class="fg" id="fg-password">
-            <label>Password</label>
-            <div class="input-wrap">
-                <input type="${showPassword?'text':'password'}" id="f-password" placeholder="Min 8 characters" value="${formData.password}" oninput="formData.password=this.value;updateStrength();clearError('fg-password')" autocomplete="new-password" required/>
-                <button type="button" class="input-action" onclick="showPassword=!showPassword;render()" tabindex="-1">${showPassword?'🙈':'👁️'}</button>
-            </div>
-            <div class="pw-strength" id="pw-strength">
-                <div class="pw-bar" id="pw1"></div><div class="pw-bar" id="pw2"></div><div class="pw-bar" id="pw3"></div><div class="pw-bar" id="pw4"></div>
-            </div>
-            <div class="pw-label" id="pw-label"></div>
-            <div class="error" id="err-password">Password must be at least 8 characters</div>
-        </div>
-
-        <div class="fg" id="fg-confirm">
-            <label>Confirm Password</label>
-            <div class="input-wrap">
-                <input type="${showConfirmPassword?'text':'password'}" id="f-confirm" placeholder="Re-enter your password" value="${formData.confirmPassword}" oninput="formData.confirmPassword=this.value;clearError('fg-confirm')" autocomplete="new-password" required/>
-                <button type="button" class="input-action" onclick="showConfirmPassword=!showConfirmPassword;render()" tabindex="-1">${showConfirmPassword?'🙈':'👁️'}</button>
-            </div>
-            <div class="error" id="err-confirm">Passwords do not match</div>
-        </div>
-
-        <div class="check-row">
-            <input type="checkbox" id="f-terms" ${agreeTerms?'checked':''} onchange="agreeTerms=this.checked"/>
-            <label for="f-terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
-        </div>
-
-        <button type="submit" class="auth-btn">Create Account</button>
+        <div class="fg" id="fg-email"><label>Email Address</label><input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" required oninput="clearErr('fg-email')"/><div class="error">Please enter a valid email</div></div>
+        <div class="fg" id="fg-username"><label>Username</label><input type="text" id="f-username" placeholder="Choose a unique username" autocomplete="username" maxlength="20" required oninput="checkUsername(this.value);clearErr('fg-username')"/><span class="username-status" id="uname-st"></span><div class="error">Username must be 3-20 chars (letters, numbers, underscores)</div></div>
+        <div class="fg" id="fg-country"><label>Country of Residence</label><select id="f-country" required onchange="clearErr('fg-country')"><option value="" disabled selected>Select your country</option>${COUNTRIES.map(c=>`<option>${c}</option>`).join('')}</select><div class="error">Please select your country</div></div>
+        <div class="fg" id="fg-dob"><label>Date of Birth</label><input type="date" id="f-dob" required max="${maxDOB()}" onchange="clearErr('fg-dob')"/><div class="error">You must be at least 18 years old</div></div>
+        <div class="fg" id="fg-pw"><label>Password</label><div class="input-wrap"><input type="${showPw?'text':'password'}" id="f-pw" placeholder="Min 8 characters" autocomplete="new-password" required oninput="updateStrength();clearErr('fg-pw')"/><button type="button" class="input-action" onclick="showPw=!showPw;render()" tabindex="-1">${showPw?'🙈':'👁️'}</button></div><div class="pw-strength"><div class="pw-bar" id="pw1"></div><div class="pw-bar" id="pw2"></div><div class="pw-bar" id="pw3"></div><div class="pw-bar" id="pw4"></div></div><div class="pw-label" id="pw-lbl"></div><div class="error">Password must be at least 8 characters</div></div>
+        <div class="fg" id="fg-cpw"><label>Confirm Password</label><div class="input-wrap"><input type="${showCpw?'text':'password'}" id="f-cpw" placeholder="Re-enter your password" autocomplete="new-password" required oninput="clearErr('fg-cpw')"/><button type="button" class="input-action" onclick="showCpw=!showCpw;render()" tabindex="-1">${showCpw?'🙈':'👁️'}</button></div><div class="error">Passwords do not match</div></div>
+        <div class="check-row"><input type="checkbox" id="f-terms" ${agreeTerms?'checked':''} onchange="agreeTerms=this.checked"/><label for="f-terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label></div>
+        <button type="submit" class="auth-btn" id="signup-btn" ${loading?'disabled':''}>${loading?'<span class="spinner"></span>Creating...':'Create Account'}</button>
     </form>
-
-    <div class="auth-link" onclick="switchView('signin')">Already have an account? <strong>Sign in</strong></div>`;
+    <div class="auth-link" onclick="view='signin';render()">Already have an account? <strong>Sign in</strong></div>`;
 }
 
-function renderSignin(){
-    return`
-    <div class="auth-tabs">
-        <button class="auth-tab" onclick="switchView('signup')">Sign Up</button>
-        <button class="auth-tab on" onclick="switchView('signin')">Sign In</button>
-    </div>
-
-    <div class="social-btns">
-        <button class="social-btn" onclick="toast('Google sign-in coming soon')">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Google
-        </button>
-        <button class="social-btn" onclick="toast('Apple sign-in coming soon')">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-            Apple
-        </button>
-    </div>
-
-    <div class="divider">or sign in with email</div>
-
+function signinHTML(){
+    return`<div class="auth-tabs"><button class="auth-tab" onclick="view='signup';render()">Sign Up</button><button class="auth-tab on">Sign In</button></div>
+    ${socialBtns('sign in')}
     <form onsubmit="handleSignin(event)">
-        <div class="fg" id="fg-si-email">
-            <label>Email or Username</label>
-            <input type="text" id="f-si-email" placeholder="you@example.com or username" autocomplete="email" required/>
-            <div class="error" id="err-si-email">Please enter your email or username</div>
-        </div>
-
-        <div class="fg" id="fg-si-password">
-            <label>Password</label>
-            <div class="input-wrap">
-                <input type="${showPassword?'text':'password'}" id="f-si-password" placeholder="Enter your password" autocomplete="current-password" required/>
-                <button type="button" class="input-action" onclick="showPassword=!showPassword;render()" tabindex="-1">${showPassword?'🙈':'👁️'}</button>
-            </div>
-            <div class="error" id="err-si-password">Please enter your password</div>
-        </div>
-
-        <div style="text-align:right;margin-bottom:16px">
-            <span class="auth-link" style="display:inline;margin:0;font-size:12px" onclick="switchView('forgot')">Forgot password?</span>
-        </div>
-
-        <button type="submit" class="auth-btn">Sign In</button>
+        <div class="fg" id="fg-si-email"><label>Email</label><input type="email" id="f-si-email" placeholder="you@example.com" autocomplete="email" required oninput="clearErr('fg-si-email')"/><div class="error">Please enter your email</div></div>
+        <div class="fg" id="fg-si-pw"><label>Password</label><div class="input-wrap"><input type="${showPw?'text':'password'}" id="f-si-pw" placeholder="Enter your password" autocomplete="current-password" required oninput="clearErr('fg-si-pw')"/><button type="button" class="input-action" onclick="showPw=!showPw;render()" tabindex="-1">${showPw?'🙈':'👁️'}</button></div><div class="error">Please enter your password</div></div>
+        <div style="text-align:right;margin-bottom:16px"><span class="auth-link" style="display:inline;margin:0;font-size:12px" onclick="view='forgot';render()">Forgot password?</span></div>
+        <button type="submit" class="auth-btn" id="signin-btn" ${loading?'disabled':''}>${loading?'<span class="spinner"></span>Signing in...':'Sign In'}</button>
     </form>
-
-    <div class="auth-link" onclick="switchView('signup')">Don't have an account? <strong>Sign up</strong></div>`;
+    <div class="auth-link" onclick="view='signup';render()">Don't have an account? <strong>Sign up</strong></div>`;
 }
 
-function renderForgot(){
-    return`
-    <div class="back-link" onclick="switchView('signin')">← Back to Sign In</div>
-
-    <div style="text-align:center;margin-bottom:24px">
-        <div style="font-size:36px;margin-bottom:12px">🔐</div>
-        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:6px">Reset Password</h2>
-        <p style="font-size:13px;color:var(--dim);line-height:1.5">Enter your email address and we'll send you a link to reset your password.</p>
-    </div>
-
+function forgotHTML(){
+    return`<div class="back-link" onclick="view='signin';render()">← Back to Sign In</div>
+    <div style="text-align:center;margin-bottom:24px"><div style="font-size:36px;margin-bottom:12px">🔐</div><h2 style="font-size:1.3rem;font-weight:700;margin-bottom:6px">Reset Password</h2><p style="font-size:13px;color:var(--dim);line-height:1.5">Enter your email and we'll send you a reset link.</p></div>
     <form onsubmit="handleForgot(event)">
-        <div class="fg" id="fg-fp-email">
-            <label>Email Address</label>
-            <input type="email" id="f-fp-email" placeholder="you@example.com" autocomplete="email" required/>
-            <div class="error" id="err-fp-email">Please enter a valid email</div>
-        </div>
-
-        <button type="submit" class="auth-btn">Send Reset Link</button>
+        <div class="fg" id="fg-fp-email"><label>Email Address</label><input type="email" id="f-fp-email" placeholder="you@example.com" autocomplete="email" required/><div class="error">Please enter a valid email</div></div>
+        <button type="submit" class="auth-btn" ${loading?'disabled':''}>${loading?'<span class="spinner"></span>Sending...':'Send Reset Link'}</button>
     </form>`;
 }
 
-function renderResetSent(){
-    return`
-    <div class="success-view">
-        <div class="success-icon">📧</div>
-        <div class="success-title">Check Your Email</div>
-        <div class="success-sub">We've sent a password reset link to your email address. Please check your inbox and follow the instructions.<br><br>Didn't receive it? Check your spam folder or try again.</div>
-        <button class="auth-btn" onclick="switchView('forgot')">Try Again</button>
-        <button class="auth-btn secondary" onclick="switchView('signin')">Back to Sign In</button>
-    </div>`;
+function resetSentHTML(){
+    return`<div class="success-view"><div class="success-icon">📧</div><div class="success-title">Check Your Email</div><div class="success-sub">We've sent a password reset link. Check your inbox and follow the instructions.</div><button class="auth-btn" onclick="view='forgot';render()">Try Again</button><button class="auth-btn secondary" onclick="view='signin';render()">Back to Sign In</button></div>`;
 }
 
-function renderSignupSuccess(){
-    return`
-    <div class="success-view">
-        <div class="success-icon">🎉</div>
-        <div class="success-title">Welcome to Tradyom!</div>
-        <div class="success-sub">Your account has been created successfully.<br>Check your email to verify your address and get started.</div>
-        <button class="auth-btn" onclick="window.location.href='trading-journal.html'">Go to Journal →</button>
-        <button class="auth-btn secondary" onclick="switchView('signin')">Sign In</button>
-    </div>`;
+function verifyHTML(){
+    return`<div class="success-view"><div class="success-icon">🎉</div><div class="success-title">Welcome to Tradyom!</div><div class="success-sub">Your account has been created. Check your email to verify your address, then sign in to get started.</div><button class="auth-btn" onclick="view='signin';render()">Sign In</button></div>`;
 }
 
-// ═══ LOGIC ═══
-function switchView(v){view=v;showPassword=false;showConfirmPassword=false;render();}
-
-function toast(msg,isError){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(isError?' error':'')+' show';setTimeout(()=>t.classList.remove('show'),3000);}
-
-function getMaxDOB(){const d=new Date();d.setFullYear(d.getFullYear()-18);return d.toISOString().slice(0,10);}
-
-function clearError(id){document.getElementById(id)?.classList.remove('has-error');}
-
-let usernameTimer;
-function checkUsername(val){
-    clearTimeout(usernameTimer);
-    if(!val||val.length<3){usernameStatus='';render();return;}
-    if(!/^[a-zA-Z0-9_]+$/.test(val)){usernameStatus='';document.getElementById('fg-username')?.classList.add('has-error');return;}
-    usernameStatus='checking';
-    const el=document.getElementById('username-status');
+// ═══ USERNAME CHECK (real DB query) ═══
+let unameTimer;
+async function checkUsername(val){
+    clearTimeout(unameTimer);usernameOk=null;
+    const el=document.getElementById('uname-st');
+    if(!val||val.length<3||!/^[a-zA-Z0-9_]+$/.test(val)){if(el){el.className='username-status';el.textContent='';}return;}
     if(el){el.className='username-status checking';el.textContent='⏳ Checking...';}
-    usernameTimer=setTimeout(()=>{
-        const taken=TAKEN_USERNAMES.includes(val.toLowerCase());
-        usernameStatus=taken?'taken':'available';
-        const el=document.getElementById('username-status');
-        if(el){el.className='username-status '+usernameStatus;el.textContent=taken?'❌ Taken':'✅ Available';}
-    },600);
+    unameTimer=setTimeout(async()=>{
+        try{
+            const {data,error}=await sb.rpc('check_username',{uname:val});
+            usernameOk=!!data;
+            if(el){el.className='username-status '+(usernameOk?'available':'taken');el.textContent=usernameOk?'✅ Available':'❌ Taken';}
+        }catch(e){if(el){el.className='username-status';el.textContent='';}}
+    },500);
 }
 
+// ═══ PASSWORD STRENGTH ═══
 function updateStrength(){
-    const pw=formData.password;
-    let score=0;
-    if(pw.length>=8)score++;
-    if(pw.length>=12)score++;
-    if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))score++;
-    if(/[0-9]/.test(pw))score++;
-    if(/[^a-zA-Z0-9]/.test(pw))score++;
-    score=Math.min(score,4);
+    const pw=document.getElementById('f-pw')?.value||'';
+    let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^a-zA-Z0-9]/.test(pw))s++;s=Math.min(s,4);
+    const cls=['','weak','medium','medium','strong'],lbl=['','Weak','Fair','Good','Strong'];
+    for(let i=1;i<=4;i++){const b=document.getElementById('pw'+i);if(b)b.className='pw-bar'+(i<=s?' '+cls[s]:'');}
+    const l=document.getElementById('pw-lbl');if(l)l.textContent=pw?lbl[s]||'':'';
+}
 
-    const labels=['','Weak','Fair','Good','Strong'];
-    const classes=['','weak','medium','medium','strong'];
-    for(let i=1;i<=4;i++){
-        const bar=document.getElementById('pw'+i);
-        if(bar)bar.className='pw-bar'+(i<=score?' '+classes[score]:'');
+// ═══ SIGNUP ═══
+async function handleSignup(e){
+    e.preventDefault();if(loading)return;
+    const email=document.getElementById('f-email').value.trim();
+    const username=document.getElementById('f-username').value.trim();
+    const country=document.getElementById('f-country').value;
+    const dob=document.getElementById('f-dob').value;
+    const pw=document.getElementById('f-pw').value;
+    const cpw=document.getElementById('f-cpw').value;
+    let ok=true;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setErr('fg-email');ok=false;}
+    if(!username||username.length<3||!/^[a-zA-Z0-9_]+$/.test(username)){setErr('fg-username');ok=false;}
+    if(usernameOk===false){setErr('fg-username');ok=false;}
+    if(!country){setErr('fg-country');ok=false;}
+    if(!dob||((Date.now()-new Date(dob).getTime())/(365.25*86400000))<18){setErr('fg-dob');ok=false;}
+    if(!pw||pw.length<8){setErr('fg-pw');ok=false;}
+    if(pw!==cpw){setErr('fg-cpw');ok=false;}
+    if(!agreeTerms){toast('Please agree to the Terms',false);ok=false;}
+    if(!ok)return;
+
+    loading=true;render();
+    try{
+        // 1. Sign up with Supabase Auth
+        const{data:authData,error:authErr}=await sb.auth.signUp({email,password:pw,options:{data:{username}}});
+        if(authErr)throw authErr;
+
+        // 2. Create profile
+        if(authData.user){
+            const{error:profErr}=await sb.from('profiles').insert({
+                id:authData.user.id,email,username:username.toLowerCase(),country,date_of_birth:dob
+            });
+            if(profErr)console.warn('Profile insert:',profErr.message);
+        }
+
+        loading=false;view='verify';render();
+    }catch(err){
+        loading=false;render();
+        toast(err.message||'Signup failed',false);
     }
-    const lbl=document.getElementById('pw-label');
-    if(lbl)lbl.textContent=pw?labels[score]||'':'';
 }
 
-function validateSignup(){
-    let valid=true;
-    // Email
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)){document.getElementById('fg-email').classList.add('has-error');valid=false;}
-    // Username
-    if(!formData.username||formData.username.length<3||!/^[a-zA-Z0-9_]+$/.test(formData.username)){document.getElementById('fg-username').classList.add('has-error');valid=false;}
-    if(usernameStatus==='taken'){document.getElementById('fg-username').classList.add('has-error');valid=false;}
-    // Country
-    if(!formData.country){document.getElementById('fg-country').classList.add('has-error');valid=false;}
-    // DOB (must be 18+)
-    if(!formData.dob){document.getElementById('fg-dob').classList.add('has-error');valid=false;}
-    else{const age=Math.floor((Date.now()-new Date(formData.dob).getTime())/(365.25*86400000));if(age<18){document.getElementById('fg-dob').classList.add('has-error');valid=false;}}
-    // Password
-    if(!formData.password||formData.password.length<8){document.getElementById('fg-password').classList.add('has-error');valid=false;}
-    // Confirm
-    if(formData.password!==formData.confirmPassword){document.getElementById('fg-confirm').classList.add('has-error');valid=false;}
-    // Terms
-    if(!agreeTerms){toast('Please agree to the Terms of Service',true);valid=false;}
-    return valid;
+// ═══ SIGNIN ═══
+async function handleSignin(e){
+    e.preventDefault();if(loading)return;
+    const email=document.getElementById('f-si-email').value.trim();
+    const pw=document.getElementById('f-si-pw').value;
+    if(!email){setErr('fg-si-email');return;}
+    if(!pw){setErr('fg-si-pw');return;}
+    loading=true;render();
+    try{
+        const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+        if(error)throw error;
+        toast('Welcome back!',true);
+        setTimeout(()=>window.location.href='trading-journal.html',1000);
+    }catch(err){
+        loading=false;render();
+        toast(err.message||'Sign in failed',false);
+    }
 }
 
-function handleSignup(e){
-    e.preventDefault();
-    if(!validateSignup())return;
-    // Simulate saving to localStorage
-    const users=JSON.parse(localStorage.getItem('tj-users')||'[]');
-    if(users.find(u=>u.email===formData.email)){toast('Email already registered',true);return;}
-    if(users.find(u=>u.username===formData.username.toLowerCase())){toast('Username already taken',true);return;}
-    users.push({email:formData.email,username:formData.username.toLowerCase(),country:formData.country,dob:formData.dob,password:btoa(formData.password),createdAt:new Date().toISOString()});
-    localStorage.setItem('tj-users',JSON.stringify(users));
-    localStorage.setItem('tj-currentUser',JSON.stringify({email:formData.email,username:formData.username}));
-    view='signup-success';render();
+// ═══ FORGOT PASSWORD ═══
+async function handleForgot(e){
+    e.preventDefault();if(loading)return;
+    const email=document.getElementById('f-fp-email').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setErr('fg-fp-email');return;}
+    loading=true;render();
+    try{
+        const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/auth.html'});
+        if(error)throw error;
+        loading=false;view='reset-sent';render();
+    }catch(err){
+        loading=false;render();
+        toast(err.message||'Failed to send reset email',false);
+    }
 }
 
-function handleSignin(e){
-    e.preventDefault();
-    const email=document.getElementById('f-si-email').value;
-    const pw=document.getElementById('f-si-password').value;
-    if(!email){document.getElementById('fg-si-email').classList.add('has-error');return;}
-    if(!pw){document.getElementById('fg-si-password').classList.add('has-error');return;}
-    const users=JSON.parse(localStorage.getItem('tj-users')||'[]');
-    const user=users.find(u=>(u.email===email||u.username===email.toLowerCase())&&atob(u.password)===pw);
-    if(!user){toast('Invalid credentials',true);return;}
-    localStorage.setItem('tj-currentUser',JSON.stringify({email:user.email,username:user.username}));
-    toast('Welcome back, '+user.username+'!');
-    setTimeout(()=>window.location.href='trading-journal.html',1500);
-}
-
-function handleForgot(e){
-    e.preventDefault();
-    const email=document.getElementById('f-fp-email').value;
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('fg-fp-email').classList.add('has-error');return;}
-    view='reset-sent';render();
+// ═══ SOCIAL AUTH ═══
+async function socialAuth(provider){
+    try{
+        const{error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo:window.location.origin+'/trading-journal.html'}});
+        if(error)throw error;
+    }catch(err){toast(err.message||provider+' sign-in not configured yet',false);}
 }
 
 // ═══ INIT ═══
 render();
-// Re-apply password strength on re-render
-setTimeout(updateStrength,50);
 </script>
 </body>
 </html>
